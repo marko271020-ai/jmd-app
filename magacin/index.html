@@ -283,11 +283,6 @@ tr.day{cursor:pointer} tr.day:active td{background:var(--red-soft)}
 </main>
 
 <main id="stockView" hidden>
-  <section class="sum">
-    <div class="stat"><div class="k">Ukupno komada</div><div class="v" id="sTotal">0</div></div>
-    <div class="stat hot"><div class="k">Nema na stanju</div><div class="v" id="sZero">0</div></div>
-    <div class="monthline"><span>Malo na stanju (1–2 kom.) <b id="sLow">0</b></span></div>
-  </section>
   <section>
     <h2><span>Trenutno stanje</span><span class="hint">dodirni za ulaz / izlaz</span></h2>
     <div class="list" id="stockList"></div>
@@ -512,8 +507,6 @@ function chartMonth(D){
 function renderStock(){
   const st=stockAt("9999-12-31");
   const tot=PRODUCTS.reduce((a,p)=>a+Math.max(0,st[p.id]),0);
-  $("sTotal").innerHTML=kom(tot);$("sZero").textContent=PRODUCTS.filter(p=>st[p.id]<=0).length;
-  $("sLow").textContent=PRODUCTS.filter(p=>st[p.id]>0&&st[p.id]<=LOW).length;
   $("stockList").innerHTML=PRODUCTS.map(p=>{const q=st[p.id],c=cls(q),lm=lastMove(p.id);
     const last=lm?`poslednje: ${TYPE[lm.t].toLowerCase()} ${fmt(lm.q)} · ${parse(lm.d).getDate()}.${parse(lm.d).getMonth()+1}.`:"još nema unosa";
     return `<button class="stock-row" data-p="${p.id}" style="width:100%;text-align:left"><span class="ico">${ICONS[p.id]}</span><div class="main"><div class="t">${p.name}</div><div class="s">${last}</div></div>
