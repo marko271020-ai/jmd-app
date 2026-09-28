@@ -289,7 +289,7 @@ tr.day{cursor:pointer} tr.day:active td{background:var(--red-soft)}
   </section>
   <section>
     <button class="btn" id="dayRepBtn">Izveštaj za danas (slika)</button>
-    <div class="msg" id="dayRepMsg" style="margin-top:6px">Stanje, ulaz i izlaz svih proizvoda za današnji dan.</div>
+    <div class="msg" id="dayRepMsg" style="margin-top:6px">Stanje svih proizvoda na kraju današnjeg dana.</div>
   </section>
   <section class="backup">
     <h2>Rezervna kopija</h2>
@@ -633,22 +633,14 @@ async function makeDayImage(date){
   T("PREZENTER K5",W-56,92,32,RED,800,"right");T("Magacin Niš",W-56,138,30,INK,600,"right");
   T("Dnevni izveštaj magacina",56,272,50,INK,800);
   T(cap(DAYS[d.getDay()])+", "+d.getDate()+". "+MGEN[d.getMonth()]+" "+d.getFullYear()+".",56,322,32,MUT,500);
-  let I=0,O=0,E=0,S=0;PRODUCTS.forEach(p=>{S+=rows[p.id].start;I+=rows[p.id].in;O+=rows[p.id].out;E+=Math.max(0,rows[p.id].end)});
-  // kartice
-  const cw=(W-112-40)/3;[["PRIMLJENO",(I?"+":"")+fmt(I),"#fff",OK,MUT],["IZDATO",(O?"−":"")+fmt(O),RED,"#fff","rgba(255,255,255,.85)"],["NA STANJU",fmt(E),"#fff",INK,MUT]].forEach(([k,v,bg,vc,kc],i)=>{
-    const x=56+i*(cw+20);rrect(c,x,360,cw,150,26);c.fillStyle=bg;c.fill();if(bg==="#fff"){c.strokeStyle=LINE;c.lineWidth=2;c.stroke()}
-    T(k,x+28,406,22,kc,700);T(v+" kom",x+28,474,46,vc,800)});
-  // tabela
-  const X={n:56,s:640,i:790,o:920,e:W-56};let y=580;
-  rrect(c,36,y-44,W-72,82+PRODUCTS.length*60+70,26);c.fillStyle="#fff";c.fill();
-  T("Proizvod",X.n+10,y,22,MUT,700);T("Početno",X.s,y,22,MUT,700,"right");T("Ulaz",X.i,y,22,MUT,700,"right");T("Izlaz",X.o,y,22,MUT,700,"right");T("Stanje",X.e-10,y,22,MUT,700,"right");
-  c.fillStyle=LINE;c.fillRect(56,y+18,W-112,2);y+=62;let anyFix=false;
-  PRODUCTS.forEach(p=>{const r=rows[p.id];if(r.fix)anyFix=true;
-    T(p.name+(r.fix?" *":""),X.n+10,y,28,INK,700);T(fmt(r.start),X.s,y,28,INK,500,"right");
-    T(r.in?"+"+fmt(r.in):"–",X.i,y,28,r.in?OK:MUT,700,"right");T(r.out?"−"+fmt(r.out):"–",X.o,y,28,r.out?RED:MUT,700,"right");
-    T(fmt(r.end),X.e-10,y,30,r.end<=0?RED:INK,800,"right");c.fillStyle=LINE;c.fillRect(56,y+20,W-112,1);y+=60});
-  y+=10;T("Ukupno",X.n+10,y,28,INK,800);T(fmt(S),X.s,y,28,INK,800,"right");T(I?"+"+fmt(I):"–",X.i,y,28,OK,800,"right");T(O?"−"+fmt(O):"–",X.o,y,28,RED,800,"right");T(fmt(E),X.e-10,y,30,INK,800,"right");
-  if(anyFix)T("* stanje ispravljeno popisom tokom dana",56,y+70,22,MUT,500);
+  // tabela: samo krajnje stanje
+  let y=420;const rh=78;
+  rrect(c,36,y-60,W-72,96+PRODUCTS.length*rh,26);c.fillStyle="#fff";c.fill();
+  T("Proizvod",76,y,24,MUT,700);T("Stanje",W-76,y,24,MUT,700,"right");
+  c.fillStyle=LINE;c.fillRect(56,y+20,W-112,2);y+=80;
+  PRODUCTS.forEach((p,i)=>{const q=rows[p.id].end;
+    T(p.name,76,y,34,INK,700);T(fmt(q)+" kom",W-76,y,36,q<=0?RED:INK,800,"right");
+    if(i<PRODUCTS.length-1){c.fillStyle=LINE;c.fillRect(56,y+26,W-112,1)}y+=rh});
   const t=new Date();T("JMD 021 Trade DOO · napravljeno "+t.getDate()+"."+(t.getMonth()+1)+"."+t.getFullYear()+". u "+pad(t.getHours())+":"+pad(t.getMinutes()),W/2,H-36,22,MUT,500,"center");
   return {cv,name:`JMD-magacin-K5-${date.split("-").reverse().join(".")}.png`};
 }
