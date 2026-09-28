@@ -287,6 +287,10 @@ tr.day{cursor:pointer} tr.day:active td{background:var(--red-soft)}
     <h2><span>Trenutno stanje</span><span class="hint">dodirni za ulaz / izlaz</span></h2>
     <div class="list" id="stockList"></div>
   </section>
+  <section>
+    <button class="btn" id="dayRepBtn">Izveštaj za danas (slika)</button>
+    <div class="msg" id="dayRepMsg" style="margin-top:6px">Stanje, ulaz i izlaz svih proizvoda za današnji dan.</div>
+  </section>
   <section class="backup">
     <h2>Rezervna kopija</h2>
     <div class="btns"><button class="btn2" id="bkSend">Pošalji kopiju</button><button class="btn2" id="bkFileBtn">Učitaj iz fajla</button></div>
@@ -604,6 +608,56 @@ $("bkFileBtn").onclick=()=>$("bkFile").click();
 $("bkFile").onchange=e=>{const f=e.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>importText(rd.result);rd.readAsText(f);e.target.value=""};
 $("bkOpen").onclick=()=>{$("bkBox").hidden=!$("bkBox").hidden};
 $("bkLoad").onclick=()=>{if(importText($("bkText").value)){$("bkBox").hidden=true;$("bkText").value=""}};
+
+/* ---------- dnevni izveštaj kao slika ---------- */
+function rrect(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath()}
+function logoImage(){return new Promise(ok=>{const sv=document.querySelector(".logo svg");if(!sv)return ok(null);
+  const cl=sv.cloneNode(true);cl.setAttribute("xmlns","http://www.w3.org/2000/svg");cl.removeAttribute("style");
+  const im=new Image();im.onload=()=>ok(im);im.onerror=()=>ok(null);im.src="data:image/svg+xml;charset=utf-8,"+encodeURIComponent(cl.outerHTML)})}
+function dayReport(date){
+  const d=parse(date),prev=iso(new Date(d.getFullYear(),d.getMonth(),d.getDate()-1));
+  const s=stockAt(prev),rows={};PRODUCTS.forEach(p=>rows[p.id]={start:s[p.id],in:0,out:0,moved:false,fix:false});
+  dayMoves(date).forEach(m=>{const r=rows[m.p];if(!r)return;
+    if(m.t==="set"){if(!r.moved){r.start=m.q}else{r.fix=true}}
+    else{r.moved=true;if(m.t==="in")r.in+=m.q;else r.out+=m.q}});
+  const end=stockAt(date);PRODUCTS.forEach(p=>rows[p.id].end=end[p.id]);
+  return rows;
+}
+async function makeDayImage(date){
+  const rows=dayReport(date),d=parse(date);
+  const W=1080,H=1350,cv=document.createElement("canvas");cv.width=W;cv.height=H;const c=cv.getContext("2d");
+  const F='-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif',RED="#B01F2C",INK="#1B1516",MUT="#7B6E70",LINE="#ECE4E5",OK="#1F7A4D";
+  const T=(t,x,y,sz,col,w,al)=>{c.font=`${w||400} ${sz}px ${F}`;c.fillStyle=col;c.textAlign=al||"left";c.fillText(t,x,y)};
+  c.fillStyle="#F7F3F3";c.fillRect(0,0,W,H);c.fillStyle="#fff";c.fillRect(0,0,W,190);c.fillStyle=LINE;c.fillRect(0,190,W,2);
+  const lg=await logoImage();if(lg){const lw=440,lh=lw*lg.height/lg.width||72;c.drawImage(lg,56,95-lh/2,lw,lh)}
+  T("PREZENTER K5",W-56,92,32,RED,800,"right");T("Magacin Niš",W-56,138,30,INK,600,"right");
+  T("Dnevni izveštaj magacina",56,272,50,INK,800);
+  T(cap(DAYS[d.getDay()])+", "+d.getDate()+". "+MGEN[d.getMonth()]+" "+d.getFullYear()+".",56,322,32,MUT,500);
+  let I=0,O=0,E=0,S=0;PRODUCTS.forEach(p=>{S+=rows[p.id].start;I+=rows[p.id].in;O+=rows[p.id].out;E+=Math.max(0,rows[p.id].end)});
+  // kartice
+  const cw=(W-112-40)/3;[["PRIMLJENO",(I?"+":"")+fmt(I),"#fff",OK,MUT],["IZDATO",(O?"−":"")+fmt(O),RED,"#fff","rgba(255,255,255,.85)"],["NA STANJU",fmt(E),"#fff",INK,MUT]].forEach(([k,v,bg,vc,kc],i)=>{
+    const x=56+i*(cw+20);rrect(c,x,360,cw,150,26);c.fillStyle=bg;c.fill();if(bg==="#fff"){c.strokeStyle=LINE;c.lineWidth=2;c.stroke()}
+    T(k,x+28,406,22,kc,700);T(v+" kom",x+28,474,46,vc,800)});
+  // tabela
+  const X={n:56,s:640,i:790,o:920,e:W-56};let y=580;
+  rrect(c,36,y-44,W-72,82+PRODUCTS.length*60+70,26);c.fillStyle="#fff";c.fill();
+  T("Proizvod",X.n+10,y,22,MUT,700);T("Početno",X.s,y,22,MUT,700,"right");T("Ulaz",X.i,y,22,MUT,700,"right");T("Izlaz",X.o,y,22,MUT,700,"right");T("Stanje",X.e-10,y,22,MUT,700,"right");
+  c.fillStyle=LINE;c.fillRect(56,y+18,W-112,2);y+=62;let anyFix=false;
+  PRODUCTS.forEach(p=>{const r=rows[p.id];if(r.fix)anyFix=true;
+    T(p.name+(r.fix?" *":""),X.n+10,y,28,INK,700);T(fmt(r.start),X.s,y,28,INK,500,"right");
+    T(r.in?"+"+fmt(r.in):"–",X.i,y,28,r.in?OK:MUT,700,"right");T(r.out?"−"+fmt(r.out):"–",X.o,y,28,r.out?RED:MUT,700,"right");
+    T(fmt(r.end),X.e-10,y,30,r.end<=0?RED:INK,800,"right");c.fillStyle=LINE;c.fillRect(56,y+20,W-112,1);y+=60});
+  y+=10;T("Ukupno",X.n+10,y,28,INK,800);T(fmt(S),X.s,y,28,INK,800,"right");T(I?"+"+fmt(I):"–",X.i,y,28,OK,800,"right");T(O?"−"+fmt(O):"–",X.o,y,28,RED,800,"right");T(fmt(E),X.e-10,y,30,INK,800,"right");
+  if(anyFix)T("* stanje ispravljeno popisom tokom dana",56,y+70,22,MUT,500);
+  const t=new Date();T("JMD 021 Trade DOO · napravljeno "+t.getDate()+"."+(t.getMonth()+1)+"."+t.getFullYear()+". u "+pad(t.getHours())+":"+pad(t.getMinutes()),W/2,H-36,22,MUT,500,"center");
+  return {cv,name:`JMD-magacin-K5-${date.split("-").reverse().join(".")}.png`};
+}
+$("dayRepBtn").onclick=async()=>{const msg=$("dayRepMsg");msg.textContent="Pravim izveštaj…";
+  try{const {cv,name}=await makeDayImage(todayIso());
+    const blob=await new Promise(r=>cv.toBlob(r,"image/png"));const file=new File([blob],name,{type:"image/png"});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:name});msg.textContent="";return}
+    const a=document.createElement("a");a.href=URL.createObjectURL(file);a.download=name;document.body.appendChild(a);a.click();a.remove();msg.textContent="Slika je preuzeta.";
+  }catch(e){msg.textContent=e&&e.name==="AbortError"?"":"Nije uspelo. Pokušaj ponovo."}};
 
 /* ---------- izvoz u Excel ---------- */
 function loadXLSX(){return window.XLSX?Promise.resolve():new Promise((ok,no)=>{const s=document.createElement("script");s.src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js";s.onload=ok;s.onerror=no;document.head.appendChild(s)})}
