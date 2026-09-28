@@ -474,6 +474,10 @@ html,body{overscroll-behavior:none}
     <div class="monthline"><span>Radnih dana sa prodajom <b id="mDays">0</b></span><span>prosek/dan <b id="mAvg">0</b></span></div>
   </section>
   <section>
+    <button class="exportbtn" id="repBtn">Mesečni izveštaj (slika)</button>
+    <div class="team-msg" id="repMsg"></div>
+  </section>
+  <section>
     <h2>Promet po danima</h2>
     <div class="chart"><div class="ch-r" id="chDayR"></div><div class="ch-svg" id="chDay"></div></div>
   </section>
@@ -960,6 +964,50 @@ $("xlsBtn").onclick=async()=>{const msg=$("xlsMsg");if(!teamData){msg.textConten
     if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:name});msg.textContent="Gotovo.";return}
     const a=document.createElement("a");a.href=URL.createObjectURL(file);a.download=name;document.body.appendChild(a);a.click();a.remove();msg.textContent="Fajl je preuzet.";
   }catch(e){msg.textContent=e&&e.name==="AbortError"?"":"Nije uspelo. Proveri internet i pokušaj ponovo."}};
+/* ---------- mesečni izveštaj kao slika ---------- */
+function rrect(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath()}
+function logoImage(){return new Promise(ok=>{const sv=document.querySelector(".logo svg");if(!sv)return ok(null);
+  const cl=sv.cloneNode(true);cl.setAttribute("xmlns","http://www.w3.org/2000/svg");cl.removeAttribute("style");
+  const url="data:image/svg+xml;charset=utf-8,"+encodeURIComponent(cl.outerHTML);const im=new Image();im.onload=()=>ok(im);im.onerror=()=>ok(null);im.src=url})}
+async function makeReport(){
+  const [y,m]=curMonth.split("-").map(Number);const nd=new Date(y,m,0).getDate();const mt=monthTotals();
+  const pm=new Date(y,m-2,1),pk=iso(pm).slice(0,7),prev=rangeSum(pk+"-01",pk+"-31");
+  const agg={};for(const k in days)days[k].forEach(x=>{const a=agg[x.name]||(agg[x.name]={q:0,p:0,z:0});a.q+=x.q;a.p+=x.amount;a.z+=x.amount*x.rate});
+  const prods=Object.entries(agg).filter(r=>r[1].p>0).sort((a,b)=>b[1].p-a[1].p).slice(0,7);
+  const W=1080,H=1350,cv=document.createElement("canvas");cv.width=W;cv.height=H;const c=cv.getContext("2d");
+  const F='-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif',RED="#B01F2C",INK="#1B1516",MUT="#7B6E70",LINE="#ECE4E5";
+  const T=(t,x,yy,sz,col,w,al)=>{c.font=`${w||400} ${sz}px ${F}`;c.fillStyle=col;c.textAlign=al||"left";c.fillText(t,x,yy)};
+  c.fillStyle="#F7F3F3";c.fillRect(0,0,W,H);c.fillStyle="#fff";c.fillRect(0,0,W,190);c.fillStyle=LINE;c.fillRect(0,190,W,2);
+  const lg=await logoImage();if(lg){const lw=440,lh=lw*lg.height/lg.width||72;c.drawImage(lg,56,95-lh/2,lw,lh)}
+  T("PREZENTER "+(AUTH?AUTH.code:""),W-56,92,32,RED,800,"right");T((AUTH&&AUTH.name)||"",W-56,138,30,INK,600,"right");
+  T("Mesečni izveštaj",56,272,54,INK,800);T(MONTHS[m-1][0].toUpperCase()+MONTHS[m-1].slice(1)+" "+y,56,322,34,MUT,500);
+  rrect(c,56,362,470,190,28);c.fillStyle="#fff";c.fill();c.strokeStyle=LINE;c.lineWidth=2;c.stroke();
+  rrect(c,554,362,470,190,28);c.fillStyle=RED;c.fill();
+  T("PROMET",88,414,24,MUT,700);T(fmt(mt.p)+" din",88,496,52,INK,800);
+  T("ZARADA",586,414,24,"rgba(255,255,255,.85)",700);T(fmt(mt.z)+" din",586,496,52,"#fff",800);
+  T("Radnih dana sa prodajom: "+mt.n,56,606,28,INK,500);T("Prosek po danu: "+(mt.n?fmt(Math.round(mt.p/mt.n)):"0")+" din",W-56,606,28,INK,500,"right");
+  if(prev.p&&mt.p){const pc=(mt.p/prev.p-1)*100,up=pc>=0;T((up?"▲ ":"▼ ")+Math.abs(pc).toLocaleString("de-DE",{maximumFractionDigits:0})+"% "+(up?"više":"manje")+" nego u "+MLOC[pm.getMonth()],56,652,28,up?"#1F7A4D":"#9A5B05",700)}
+  // stubići po danima
+  const cx=56,cy=690,cw=W-112,ch=230;rrect(c,cx,cy,cw,ch,24);c.fillStyle="#fff";c.fill();
+  T("Promet po danima",cx+28,cy+44,24,MUT,700);let mx=1;for(let d=1;d<=nd;d++)mx=Math.max(mx,sumItems(days[curMonth+"-"+pad(d)]||[]).p);
+  const bx=cx+28,bw=(cw-56)/nd,by=cy+ch-40,bh=ch-100;c.fillStyle=LINE;c.fillRect(bx,by,cw-56,2);
+  for(let d=1;d<=nd;d++){const v=sumItems(days[curMonth+"-"+pad(d)]||[]).p;if(v){const h=Math.max(4,v/mx*bh);rrect(c,bx+(d-1)*bw+2,by-h,Math.max(3,bw-4),h,Math.min(5,(bw-4)/2));c.fillStyle=RED;c.fill()}
+    if(d===1||d%5===0)T(String(d),bx+(d-1)*bw+bw/2,by+28,18,MUT,500,"center")}
+  // proizvodi
+  let ty=960;T("Proizvod",56,ty,22,MUT,700);T("Kom.",620,ty,22,MUT,700,"right");T("Promet",850,ty,22,MUT,700,"right");T("Zarada",W-56,ty,22,MUT,700,"right");
+  c.fillStyle=LINE;c.fillRect(56,ty+16,W-112,2);ty+=58;
+  if(!prods.length)T("Nema prodaje u ovom mesecu.",56,ty,28,MUT,500);
+  prods.forEach(([n,a])=>{T(n,56,ty,28,INK,700);T(fmt(a.q),620,ty,28,INK,500,"right");T(fmt(a.p),850,ty,28,INK,500,"right");T(fmt(Math.round(a.z*100)/100),W-56,ty,28,RED,700,"right");ty+=48});
+  const t=new Date();T("JMD 021 Trade DOO · izveštaj napravljen "+t.getDate()+"."+(t.getMonth()+1)+"."+t.getFullYear()+".",W/2,H-36,22,MUT,500,"center");
+  return {cv,name:`JMD-izvestaj-${AUTH?AUTH.code:""}-${MONTHS[m-1]}-${y}.png`};
+}
+$("repBtn").onclick=async()=>{const msg=$("repMsg");msg.textContent="Pravim izveštaj…";
+  try{const {cv,name}=await makeReport();
+    if(BR&&BR.shareImage){const ok=BR.shareImage(cv.toDataURL("image/png").split(",")[1],name);msg.textContent=ok?"Sačuvano u Galeriji (album JMD).":"Nije uspelo.";return}
+    const blob=await new Promise(r=>cv.toBlob(r,"image/png"));const file=new File([blob],name,{type:"image/png"});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:name});msg.textContent="";return}
+    const a=document.createElement("a");a.href=URL.createObjectURL(file);a.download=name;document.body.appendChild(a);a.click();a.remove();msg.textContent="Slika je preuzeta.";
+  }catch(e){msg.textContent=e&&e.name==="AbortError"?"":"Nije uspelo. Pokušaj ponovo."}};
 /* ---------- start ---------- */
 renderProducts();render();
 db=null;local=true;setSync("U telefonu");subscribe();
