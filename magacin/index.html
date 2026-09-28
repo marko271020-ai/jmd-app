@@ -248,8 +248,6 @@ tr.day{cursor:pointer} tr.day:active td{background:var(--red-soft)}
 
 <main id="dayView">
   <section class="sum">
-    <div class="stat"><div class="k">Primljeno</div><div class="v" id="dIn">0</div></div>
-    <div class="stat hot"><div class="k">Izdato</div><div class="v" id="dOut">0</div></div>
     <div class="monthline"><span>Na stanju ukupno <b id="dTotal">0</b></span><span>bez stanja <b id="dZero">0</b></span></div>
   </section>
   <section>
@@ -447,7 +445,7 @@ function renderNav(){
 function renderDay(){
   const st=stockAt(selDate),items=dayMoves(selDate);
   let i=0,o=0;items.forEach(m=>{if(m.t==="in")i+=m.q;else if(m.t==="out")o+=m.q});
-  $("dIn").innerHTML=kom(i);$("dOut").innerHTML=kom(o);
+  
   const tot=PRODUCTS.reduce((a,p)=>a+Math.max(0,st[p.id]),0),zero=PRODUCTS.filter(p=>st[p.id]<=0).length;
   $("dTotal").textContent=fmt(tot)+" kom";$("dZero").textContent=zero;$("dZero").className=zero?"bad":"";
   $("products").innerHTML=PRODUCTS.map(p=>`<button class="tile" data-p="${p.id}"><span class="ico">${ICONS[p.id]}</span><span class="tx"><span class="n">${p.name}</span><span class="st ${cls(st[p.id])}">${fmt(st[p.id])} kom</span></span></button>`).join("");
