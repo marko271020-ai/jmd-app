@@ -395,6 +395,12 @@ const SEED={key:"jmd-magacin-k5-seed-20260928",d:"2026-09-28",time:"jutro · Mag
   for(const p in SEED.items){const id="seed20260928"+p;if(!moves.some(m=>m.id===id))moves.push({id,d:SEED.d,p,t:"set",q:SEED.items[p],ts:t0+(i++),time:SEED.time})}
   try{localStorage.setItem(SEED.key,"1")}catch(e){}
   setTimeout(save,0)})();
+/* izdato 28.09.2026. (upisuje se samo jednom) */
+(function(){const K="jmd-magacin-k5-seed-20260928-izdato";let done=null;try{done=localStorage.getItem(K)}catch(e){}if(done)return;
+  const t0=new Date(2026,8,28,12,0,0).getTime(),out={bioterapija:10,aloajastuk:10,aloaprekrivac:10,ametist:1,korektor:2};let i=0;
+  for(const p in out){const id="seed20260928out"+p;if(!moves.some(m=>m.id===id))moves.push({id,d:"2026-09-28",p,t:"out",q:out[p],ts:t0+(i++),time:"danas · iz magacina"})}
+  try{localStorage.setItem(K,"1")}catch(e){}
+  setTimeout(save,0)})();
 function save(){try{localStorage.setItem(KEY,JSON.stringify({app:"jmd-magacin",v:1,code:"K5",moves}))}catch(e){toast("Greška pri čuvanju!",false)}}
 const byOrder=(a,b)=>a.d<b.d?-1:a.d>b.d?1:a.ts-b.ts;
 
