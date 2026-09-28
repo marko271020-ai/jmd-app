@@ -247,9 +247,6 @@ tr.day{cursor:pointer} tr.day:active td{background:var(--red-soft)}
 </header>
 
 <main id="dayView">
-  <section class="sum">
-    <div class="monthline"><span>Na stanju ukupno <b id="dTotal">0</b></span><span>bez stanja <b id="dZero">0</b></span></div>
-  </section>
   <section>
     <h2><span>Stanje proizvoda</span><span class="hint">dodirni za ulaz / izlaz</span></h2>
     <div class="grid" id="products"></div>
@@ -447,7 +444,7 @@ function renderDay(){
   let i=0,o=0;items.forEach(m=>{if(m.t==="in")i+=m.q;else if(m.t==="out")o+=m.q});
   
   const tot=PRODUCTS.reduce((a,p)=>a+Math.max(0,st[p.id]),0),zero=PRODUCTS.filter(p=>st[p.id]<=0).length;
-  $("dTotal").textContent=fmt(tot)+" kom";$("dZero").textContent=zero;$("dZero").className=zero?"bad":"";
+  
   $("products").innerHTML=PRODUCTS.map(p=>`<button class="tile" data-p="${p.id}"><span class="ico">${ICONS[p.id]}</span><span class="tx"><span class="n">${p.name}</span><span class="st ${cls(st[p.id])}">${fmt(st[p.id])} kom</span></span></button>`).join("");
   $("dCount").textContent=items.length?items.length+(items.length===1?" unos":" unosa"):"";
   const after={};stockAt(selDate,after);
