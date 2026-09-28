@@ -1,0 +1,663 @@
+<!doctype html><html lang="sr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="JMD Magacin">
+<meta name="theme-color" content="#ffffff">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<title>JMD Magacin</title>
+<style>
+:root{
+  color-scheme:light;
+  --red:#B01F2C; --red-dark:#8C1621; --red-soft:#F9E9EA; --red-line:#EFC6CA;
+  --ink:#1B1516; --muted:#7B6E70; --line:#ECE4E5; --ground:#F7F3F3; --card:#FFFFFF;
+  --ok:#1F7A4D; --ok-soft:#E4F2EA; --warn:#9A5B05; --warn-soft:#FFF3D6;
+  --f:-apple-system,BlinkMacSystemFont,"SF Pro Text",Roboto,"Helvetica Neue",Arial,sans-serif;
+}
+[hidden]{display:none!important}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0;overscroll-behavior:none}
+body{background:var(--ground);color:var(--ink);font-family:var(--f);font-size:16px;line-height:1.35;
+  -webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums;
+  display:flex;flex-direction:column;overflow:hidden;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+textarea{-webkit-user-select:text;user-select:text}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;touch-action:manipulation}
+button:focus-visible{outline:3px solid var(--red);outline-offset:2px}
+
+/* ---- zaglavlje ---- */
+.top{flex:none;background:var(--card);border-bottom:1px solid var(--line);padding:calc(28px + env(safe-area-inset-top,0px)) 12px 8px}
+.brand{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.logo{display:flex;align-items:center;min-width:0;flex:1 1 auto}
+.logo svg{display:block;height:auto;width:140px;max-width:100%}
+.who{flex:none;text-align:right;line-height:1.1}
+.who .role{font-size:13px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--red)}
+.who .role b{font-size:1.45em;font-weight:800;letter-spacing:.04em;margin-left:.15em;vertical-align:-.1em}
+.who .app{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:3px}
+.nav{display:flex;align-items:center;gap:6px;margin-top:8px}
+.nav .arrow{width:42px;height:40px;border-radius:12px;display:grid;place-items:center;background:var(--ground);flex:none}
+.nav .arrow svg{width:20px;height:20px}
+.nav .arrow.off{visibility:hidden}
+.nav .label{flex:1;text-align:center;font-weight:700;font-size:16px;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nav .label small{display:block;font-weight:500;font-size:12px;color:var(--muted)}
+.today-btn{font-size:13px;font-weight:600;color:var(--red);padding:2px 8px;border-radius:999px;background:var(--red-soft)}
+
+/* ---- sadržaj ---- */
+main{flex:1;width:100%;max-width:640px;margin:0 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  padding:8px 12px 12px;display:flex;flex-direction:column;gap:10px}
+.sum{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:7px 11px}
+.stat.hot{background:var(--red);border-color:var(--red);color:#fff}
+.stat .k{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;opacity:.75}
+.stat .v{font-size:21px;font-weight:800;margin-top:2px;line-height:1.1;white-space:nowrap}
+.stat .v em{font-style:normal;font-size:13px;font-weight:600;opacity:.8;margin-left:3px}
+.monthline{grid-column:1/-1;font-size:12px;color:var(--muted);display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;padding:0 2px}
+.monthline b{color:var(--ink);font-weight:700}
+.monthline b.bad{color:var(--red)}
+h2{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 6px 2px;display:flex;justify-content:space-between;gap:8px}
+h2 .hint{text-transform:none;letter-spacing:0;font-weight:500}
+
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.tile{background:var(--card);border:1.5px solid var(--line);border-radius:14px;padding:6px 8px;min-height:52px;
+  display:flex;align-items:center;gap:8px;text-align:left;transition:transform .08s,border-color .15s}
+.tile:active{transform:scale(.97);border-color:var(--red)}
+.tile .tx{flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:2px}
+.tile .n{font-weight:700;font-size:13px;line-height:1.15}
+.tile .st{font-size:12px;font-weight:700;padding:0 7px;border-radius:999px;background:var(--ok-soft);color:var(--ok)}
+.tile .st.low{background:var(--warn-soft);color:var(--warn)}
+.tile .st.zero{background:var(--red-soft);color:var(--red-dark)}
+.ico{display:block;width:28px;height:28px;flex:none;color:var(--red)}
+.ico svg{width:100%;height:100%;display:block;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linejoin:round;stroke-linecap:round}
+.ico .fl{fill:var(--red-soft)} .ico .fl2{fill:#fff}
+.ico .gem{fill:#F3D9F0;stroke:#8E3C8A} .ico .gem+path{stroke:#8E3C8A}
+.ico .leaf{fill:#E3F1E7;stroke:#2E7D4F}
+.ico .pet{fill:#fff;stroke:#C9A227;stroke-width:1.3} .ico .ctr{fill:#F5C542;stroke:#C9A227;stroke-width:1.3}
+.ico .mag{fill:#DCE6F5;stroke:#3C5A8E}
+.ico .lbl{fill:var(--red);stroke:none;font:800 8px var(--f)}
+.ico.sm{width:28px;height:28px} .ico.lg{width:44px;height:44px}
+
+.list{background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.item{display:flex;align-items:center;gap:10px;padding:8px 6px 8px 12px;border-top:1px solid var(--line);min-height:52px}
+.item:first-child{border-top:0}
+.item .main{flex:1;min-width:0}
+.item .t{font-weight:600;font-size:15px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.item .s{font-size:12px;color:var(--muted);margin-top:2px}
+.item .amt{text-align:right;font-weight:800;font-size:17px;white-space:nowrap}
+.item .amt small{display:block;font-weight:600;font-size:11.5px;color:var(--muted)}
+.tag{font-size:11px;font-weight:700;border-radius:6px;padding:1px 6px}
+.tag.in{background:var(--ok-soft);color:var(--ok)} .tag.out{background:var(--red-soft);color:var(--red-dark)} .tag.set{background:var(--warn-soft);color:var(--warn)}
+.amt.in{color:var(--ok)} .amt.out{color:var(--red)} .amt.set{color:var(--warn)}
+.del{width:40px;height:40px;border-radius:10px;display:grid;place-items:center;color:var(--muted);flex:none}
+.del svg{width:18px;height:18px}
+.confirm{display:flex;gap:6px;flex:none}
+.confirm button{height:36px;padding:0 12px;border-radius:10px;font-size:14px;font-weight:700}
+.confirm .yes{background:var(--red);color:#fff}
+.confirm .no{background:var(--ground)}
+.empty{padding:22px 16px;text-align:center;color:var(--muted);font-size:14px}
+#dayView .entries-sec{flex:1;min-height:120px;display:flex;flex-direction:column}
+#dayView .entries-sec .list{flex:1;min-height:0;overflow-y:auto}
+
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-align:right;padding:8px 8px 6px}
+th:first-child,td:first-child{text-align:left}
+td{padding:9px 8px;border-top:1px solid var(--line);text-align:right;white-space:nowrap}
+td:first-child{font-weight:600;white-space:normal}
+td.in{color:var(--ok);font-weight:700} td.out{color:var(--red-dark);font-weight:700} td.end{font-weight:800}
+tr.tot td{font-weight:800;background:var(--ground)}
+tr.day{cursor:pointer} tr.day:active td{background:var(--red-soft)}
+.wrap{overflow-x:auto}
+
+.stock-row{display:flex;align-items:center;gap:10px;padding:8px 12px;border-top:1px solid var(--line);min-height:54px}
+.stock-row:first-child{border-top:0}
+.stock-row .main{flex:1;min-width:0}
+.stock-row .t{font-weight:700;font-size:15px}
+.stock-row .s{font-size:12px;color:var(--muted);margin-top:1px}
+.stock-row .q{font-size:20px;font-weight:800;min-width:48px;text-align:right}
+.stock-row .q small{font-size:11px;font-weight:600;color:var(--muted);margin-left:2px}
+.pill{font-size:11px;font-weight:700;padding:3px 8px;border-radius:999px;flex:none;background:var(--ok-soft);color:var(--ok)}
+.pill.low{background:var(--warn-soft);color:var(--warn)} .pill.zero{background:var(--red-soft);color:var(--red-dark)}
+
+.chart{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:10px 12px 8px}
+.ch-r{font-size:13px;font-weight:600;min-height:18px;margin-bottom:6px}
+.ch-r span{color:var(--muted);font-weight:500}
+.ch-svg svg{display:block;width:100%;height:auto;touch-action:pan-y}
+.ch-svg text{font-family:var(--f)}
+.ch-legend{display:flex;gap:14px;font-size:12px;color:var(--muted);margin-top:4px}
+.ch-legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+
+.btn{width:100%;height:46px;border-radius:14px;background:var(--red);color:#fff;font-weight:700;font-size:15px}
+.btn2{height:44px;border-radius:12px;font-weight:700;background:var(--card);border:1.5px solid var(--red-line);color:var(--red-dark)}
+.backup{display:flex;flex-direction:column;gap:8px}
+.backup .btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.backup textarea{width:100%;min-height:90px;border-radius:12px;border:1.5px solid var(--line);padding:10px;font:14px var(--f);background:var(--card);color:var(--ink)}
+.msg{font-size:13px;color:var(--muted)}
+.linkbtn{height:34px;color:var(--muted);font-weight:600;font-size:13px}
+
+/* ---- donji meni ---- */
+.tabs{flex:none;background:rgba(255,255,255,.96);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(2,1fr);
+  padding:2px 12px calc(4px + env(safe-area-inset-bottom,0px))}
+.tabs button{height:48px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:12px;font-weight:600;color:var(--muted);border-radius:12px}
+.tabs button svg{width:22px;height:22px}
+.tabs button[aria-selected="true"]{color:var(--red)}
+
+/* ---- donji panel ---- */
+.veil{position:fixed;inset:0;background:rgba(27,21,22,.38);z-index:40;opacity:0;pointer-events:none;transition:opacity .2s}
+.veil.on{opacity:1;pointer-events:auto}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:50;background:var(--card);border-radius:22px 22px 0 0;max-width:640px;margin:0 auto;
+  padding:10px 16px calc(16px + env(safe-area-inset-bottom,0px));transform:translateY(105%);transition:transform .25s cubic-bezier(.2,.8,.2,1)}
+.sheet.on{transform:none}
+.grab{width:40px;height:5px;border-radius:3px;background:var(--line);margin:0 auto 12px}
+.sheet h3{margin:0;font-size:21px;font-weight:800}
+.sheet .sub{color:var(--muted);font-size:14px;margin-top:2px}
+.sheet .sub b{color:var(--ink)}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;background:var(--ground);border-radius:14px;padding:4px;margin-top:14px}
+.seg button{height:44px;border-radius:11px;font-weight:700;font-size:14.5px;color:var(--muted)}
+.seg button.on[data-t="in"]{background:var(--ok);color:#fff}
+.seg button.on[data-t="out"]{background:var(--red);color:#fff}
+.seg button.on[data-t="set"]{background:var(--warn);color:#fff}
+.qrow{display:flex;align-items:center;justify-content:center;gap:14px;margin-top:14px}
+.qrow .pm{width:58px;height:58px;border-radius:16px;border:2px solid var(--red-line);font-size:30px;font-weight:700;color:var(--red);display:grid;place-items:center}
+.qrow .pm:active{background:var(--red-soft)}
+.qrow .num{min-width:92px;text-align:center;font-size:46px;font-weight:800;line-height:1}
+.qrow .num small{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-top:4px}
+.chips{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:12px}
+.chips button{height:40px;border-radius:12px;background:var(--ground);font-weight:700;font-size:15px}
+.chips button:active{background:var(--red-soft)}
+.preview{margin-top:12px;text-align:center;font-size:14px;color:var(--muted);min-height:20px}
+.preview b{color:var(--ink);font-size:16px}
+.preview.neg b{color:var(--red)}
+.sheet .go{margin-top:12px;height:52px;font-size:16px}
+.sheet .go.in{background:var(--ok)} .sheet .go.set{background:var(--warn)}
+.cancel{width:100%;height:46px;margin-top:8px;border-radius:14px;background:var(--ground);font-weight:700}
+
+.toast{position:fixed;left:12px;right:12px;bottom:calc(66px + env(safe-area-inset-bottom,0px));z-index:60;background:var(--ink);color:#fff;max-width:608px;margin:0 auto;
+  border-radius:14px;padding:12px 8px 12px 14px;display:flex;align-items:center;gap:10px;font-size:14px;
+  transform:translateY(20px);opacity:0;pointer-events:none;transition:all .2s}
+.toast.on{transform:none;opacity:1;pointer-events:auto}
+.toast span{flex:1}
+.toast button{color:#FF8A8F;font-weight:700;padding:8px 10px}
+
+/* ---- uvodni ekran ---- */
+#splash{position:fixed;inset:0;z-index:100;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;transition:opacity .35s,visibility .35s}
+#splash.out{opacity:0;visibility:hidden}
+#splash .splogo{width:min(82vw,340px);height:auto;animation:beat 1s ease-in-out;margin-bottom:10px}
+#splash .ld{width:min(62vw,230px);height:6px;background:var(--red-soft);border-radius:3px;overflow:hidden;margin-top:18px}
+#splash .ld i{display:block;height:100%;width:0;background:var(--red);border-radius:3px;animation:ld 1.4s cubic-bezier(.4,0,.2,1) forwards}
+#splash .t1{font-size:15px;font-weight:600;color:var(--muted);margin-top:2px}
+#splash .t2{font-size:21px;font-weight:800;margin-top:6px}
+@keyframes beat{0%{transform:scale(.85);opacity:0}40%{transform:scale(1.06);opacity:1}70%{transform:scale(.98)}100%{transform:scale(1)}}
+@keyframes ld{0%{width:0}60%{width:78%}100%{width:100%}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}#splash .ld i{width:100%}}
+
+/* ---- veći telefoni / iPhone ---- */
+@media (min-width:380px){
+  .top{padding-left:16px;padding-right:16px;padding-bottom:12px}
+  .logo svg{width:185px}
+  .who .role{font-size:14.5px}
+  .nav{margin-top:12px}
+  .nav .arrow{width:46px;height:46px}
+  .nav .label{font-size:clamp(17px,4.8vw,21px)}
+  .nav .label small{font-size:13px}
+  main{padding:10px 16px 12px;gap:12px}
+  .stat{padding:9px 13px} .stat .v{font-size:22px}
+  .monthline{font-size:13px}
+  .grid{gap:8px}
+  .tile{padding:7px 10px;min-height:56px}
+  .ico{width:32px;height:32px}
+  .tile .n{font-size:14.5px}
+  .item .t{font-size:16px}
+  table{font-size:14px} th{font-size:11px;padding:9px 10px 7px} td{padding:10px}
+  .tabs button{height:50px}
+}
+@media (min-width:420px){
+  .logo svg{width:215px}
+  .who .role{font-size:16px}
+  .stat .v{font-size:24px}
+  .ico{width:34px;height:34px}
+  .tile .n{font-size:15px}
+}
+@media (max-width:370px){.logo svg{width:128px}.stat .v{font-size:18px}.tile .n{font-size:12.5px}}
+@media (max-height:680px){.ico{width:24px;height:24px}.stat .k{font-size:10px}}
+</style></head><body>
+
+<div id="splash" aria-hidden="true">
+  <svg class="splogo" viewBox="60 58 1196 196" ><g fill="none" stroke="#BE1E2D" stroke-width="8.5" stroke-linecap="round" stroke-linejoin="round">
+<path d="M157.5 108.5C163 84 182 67.5 203 67.5C227 67.5 243.5 86 243.5 108C243.5 124 241 136 239 146"/>
+<path d="M157.5 108.5C152 82 136 69 115 69C92 69 74.5 85 74.5 107C74.5 125 77.5 143 81.5 155Q84 163 92.5 163H105Q112.5 163 112.5 155V110C112.5 105 116.5 102 121.2 102C126 102 130 105 130 110V219C130 223 134.5 226 140.6 226C146.7 226 151.2 223 151.2 219V132C151.2 127 156 124 161.9 124C168 124 172.5 127 172.5 132V153C172.5 158.5 175.5 162.5 181.5 162.5H277.5"/>
+<path d="M153.8 244.5Q198 209 229 162.5"/></g><path fill="#BE1E2D" fill-rule="evenodd" d="M245.0 158.8 245.0 165.2 262.5 166.0 271.5 166.0 275.5 165.0 276.8 164.0 277.2 163.0 277.2 161.8 276.8 160.8 273.0 159.5ZM530.2 108.8 529.5 110.5 529.5 116.8 529.0 118.5 528.8 123.8 529.0 126.8 528.5 154.2 527.5 182.5 527.2 226.0 528.2 227.5 530.2 228.2 531.5 228.0 533.5 228.8 553.5 229.2 581.8 229.0 593.8 229.5 599.0 229.0 603.5 228.0 605.5 228.0 607.8 227.0 609.2 227.0 615.0 225.5 619.2 223.5 622.8 222.8 624.2 221.5 631.0 218.2 635.8 214.2 637.5 213.5 642.2 209.0 644.2 206.5 645.5 203.8 649.5 198.2 651.2 194.8 651.5 193.2 653.2 190.2 653.2 187.8 655.2 181.8 655.2 180.0 656.0 177.0 656.2 160.5 655.5 158.5 655.2 154.0 652.5 148.2 652.0 145.5 650.5 143.2 647.0 135.5 640.5 127.5 639.5 127.0 633.5 121.2 626.5 116.8 625.2 116.5 623.0 115.2 619.5 114.8 614.8 112.0 611.5 111.2 608.5 109.8 604.8 108.8 602.5 108.8 597.2 107.8 592.8 107.8 589.0 107.2 561.8 107.0 555.0 106.5 545.8 106.5 542.2 106.8 540.8 107.2 538.2 106.8 535.0 106.8 533.0 107.2ZM572.2 136.0 574.5 135.5 578.8 136.0 593.8 136.0 598.2 137.2 601.2 138.5 607.0 141.8 610.5 145.2 614.5 152.2 616.8 157.8 617.2 161.0 617.2 171.5 615.8 179.0 614.2 182.5 610.2 189.2 608.8 190.8 605.5 192.8 603.2 194.8 599.8 196.5 590.8 198.8 572.2 198.8 570.0 197.8 567.5 194.8 566.8 189.2 567.5 144.8 569.5 138.5 571.0 136.8ZM361.0 105.5 359.8 109.2 359.5 123.5 359.0 125.8 359.2 128.8 358.2 171.8 358.2 216.0 358.8 220.5 358.5 223.8 359.2 225.5 360.0 226.2 362.0 227.0 365.5 227.2 389.0 227.5 391.0 227.2 393.2 225.5 394.0 223.2 394.2 214.0 394.2 187.0 394.5 185.0 396.0 181.5 397.8 179.2 399.0 179.2 401.8 182.8 404.5 185.2 404.8 186.8 406.0 188.8 406.8 191.2 410.2 195.0 411.0 196.8 414.2 199.8 415.8 202.8 415.8 204.0 416.8 206.0 418.8 207.8 419.5 210.2 421.5 214.0 423.5 215.2 426.2 216.0 436.8 216.2 440.0 215.5 441.5 214.2 442.5 212.8 443.2 210.2 444.8 208.5 446.0 207.8 448.8 201.8 452.0 198.0 456.0 190.2 458.2 187.8 458.5 186.2 459.2 185.0 463.0 181.8 464.0 179.8 465.0 178.8 466.2 178.8 467.8 180.0 468.2 181.2 468.8 187.0 469.5 190.2 469.0 221.5 469.5 224.2 470.8 226.5 472.5 227.5 474.5 228.0 479.0 227.8 493.2 228.2 501.5 228.2 504.0 226.5 504.5 223.5 504.8 215.8 504.5 207.2 505.5 153.0 505.5 111.0 505.0 108.2 504.0 107.0 501.8 106.0 497.0 106.0 492.5 105.5 475.2 105.5 472.8 106.8 469.8 110.2 469.2 112.5 468.2 114.5 465.8 117.5 463.0 122.2 462.2 124.2 460.8 126.2 460.2 127.8 454.5 135.8 447.8 148.5 444.8 152.2 443.0 156.2 440.8 159.5 438.8 161.5 436.2 166.0 434.0 168.2 433.0 168.5 431.2 167.5 429.0 165.2 427.8 163.2 424.5 159.8 423.8 157.8 421.8 155.5 421.0 153.2 416.2 145.2 414.8 141.5 412.5 139.0 412.0 137.5 409.8 134.2 407.8 130.0 405.2 127.0 404.5 125.2 403.2 123.8 401.5 119.5 397.2 113.8 394.2 108.0 392.2 105.5 390.2 104.5 364.2 104.0 362.2 104.5ZM336.5 104.5 335.2 104.0 325.0 103.5 304.0 103.2 302.8 103.8 300.8 106.0 300.0 107.8 299.2 118.2 299.2 137.5 298.5 156.0 298.5 171.8 298.0 186.8 296.5 192.8 294.5 196.0 292.8 197.5 287.0 199.5 282.2 199.5 278.0 199.0 276.0 198.2 272.2 195.5 270.5 193.5 267.5 192.2 266.0 191.0 263.0 190.8 262.0 191.2 260.8 192.8 259.5 195.2 257.5 197.2 255.5 198.5 254.0 200.5 252.0 202.2 250.5 205.2 247.0 208.8 246.5 209.8 246.2 212.2 246.8 213.2 248.2 214.5 249.0 216.0 252.0 219.5 255.8 221.8 262.2 224.2 265.5 226.0 267.8 226.8 274.5 227.5 277.2 228.5 293.2 229.0 297.2 228.2 301.5 228.2 304.2 227.0 310.2 225.2 315.8 222.5 318.2 221.8 323.8 217.5 324.5 215.8 328.5 211.5 331.2 206.5 332.0 205.8 332.5 204.2 334.2 202.0 334.2 198.8 335.0 196.5 335.2 193.8 336.2 191.2 337.2 184.2 337.2 172.2 337.8 171.0 338.2 162.5 338.5 107.8ZM245.0 102.0 245.0 122.2 245.5 118.8 245.5 103.5Z"/><rect x="688" y="163.3" width="558" height="5.4" rx="2.7" fill="#BE1E2D"/><path fill="#6B6B6B" fill-rule="evenodd" d="M1099.0 195.8 1099.0 196.5 1100.2 198.0 1099.2 200.5 1099.0 211.5 1099.5 214.2 1099.0 217.5 1099.5 219.0 1099.0 221.0 1099.0 233.2 1099.8 234.0 1100.8 234.0 1102.2 233.0 1118.0 233.5 1127.2 230.5 1134.0 223.5 1136.2 215.8 1135.5 212.0 1134.5 210.0 1134.5 207.5 1132.5 204.2 1131.2 203.5 1130.8 202.0 1125.0 197.8 1122.8 197.5 1120.2 196.0 1119.5 196.2 1118.8 197.5 1116.5 197.5 1115.0 195.5 1113.5 196.0 1109.2 195.8 1107.2 197.2 1105.2 195.5 1103.5 196.0 1102.5 197.0 1100.2 195.5ZM1105.2 199.5 1106.8 199.2 1109.2 200.2 1111.8 199.8 1114.2 200.2 1118.0 200.0 1120.5 201.0 1122.2 201.0 1129.5 207.5 1130.8 212.2 1130.5 217.5 1129.0 222.5 1125.0 226.8 1121.8 227.2 1120.2 228.5 1115.2 229.8 1111.0 228.8 1108.5 229.8 1103.2 229.8 1103.0 228.5 1103.8 227.0 1103.8 224.2 1104.2 223.2 1104.2 220.0 1103.5 218.8 1104.2 213.8 1104.2 210.5 1103.8 209.5 1104.2 207.0 1104.0 202.0ZM974.8 196.0 974.5 212.8 975.0 216.8 974.5 218.5 974.5 231.5 975.2 232.5 977.0 233.2 981.0 232.8 984.0 233.5 989.0 232.8 993.8 233.2 995.5 232.2 999.0 232.5 1004.5 229.2 1007.8 226.5 1011.0 220.2 1010.2 217.0 1011.2 215.8 1010.8 212.0 1011.2 209.5 1009.8 207.2 1009.0 204.2 1008.2 203.2 1007.0 202.8 1002.5 198.2 1000.8 198.2 997.2 196.5 996.5 197.8 995.2 197.8 994.0 196.0 990.5 196.0 988.2 195.5 986.5 196.8 985.5 196.8 984.5 195.5 983.8 195.5 982.2 197.0 978.0 195.5 975.5 195.5ZM980.5 199.5 986.5 200.2 990.8 199.8 995.2 200.5 1000.0 202.2 1003.8 205.2 1006.8 212.5 1006.2 218.0 1004.8 221.8 1003.0 223.8 1002.8 225.2 1001.8 226.0 1000.8 226.0 1000.8 227.5 1000.0 228.2 998.5 227.8 997.0 228.8 994.2 228.8 993.0 230.5 992.0 230.5 990.5 229.0 983.8 229.2 982.8 230.0 981.8 230.0 979.5 228.0 979.0 224.8 979.5 223.5 979.2 220.0 979.8 218.8 979.5 216.0 980.0 213.0 979.2 209.5 979.2 206.2 979.8 205.0 979.5 200.5ZM1032.0 195.2 1031.5 198.0 1031.8 203.8 1031.2 204.8 1031.8 213.2 1031.2 214.5 1031.8 219.8 1031.2 221.8 1031.8 224.2 1031.5 229.8 1031.0 231.0 1031.8 233.0 1032.5 233.5 1039.5 232.8 1040.8 233.2 1057.8 233.8 1059.5 231.8 1059.2 230.2 1058.0 228.8 1055.5 230.0 1054.0 229.2 1049.0 229.5 1047.8 229.0 1045.2 230.0 1044.0 229.0 1043.0 229.0 1039.8 230.2 1036.0 228.8 1036.5 220.8 1036.0 217.8 1037.2 216.5 1038.5 216.0 1043.8 216.0 1047.2 217.0 1049.2 216.5 1055.8 216.8 1056.2 216.2 1056.2 214.5 1055.0 213.0 1053.5 212.2 1045.2 212.2 1044.0 212.8 1040.8 212.5 1038.0 213.0 1036.0 212.8 1035.8 212.0 1036.2 207.0 1036.0 203.0 1036.8 201.2 1038.2 199.8 1046.5 200.0 1048.2 201.2 1050.2 200.5 1053.2 200.8 1055.2 200.2 1056.5 201.2 1057.5 201.2 1059.2 198.8 1058.2 196.2 1056.8 195.8 1055.5 196.5 1053.5 196.5 1051.5 195.5 1049.2 196.8 1048.2 196.8 1046.8 195.8 1043.5 196.5 1041.2 195.5 1039.2 196.8 1038.2 196.8 1037.0 195.8 1034.5 196.5ZM773.8 195.2 771.2 197.8 771.2 199.2 771.8 199.8 779.0 199.0 780.2 200.0 780.8 201.2 780.5 211.8 780.0 213.0 780.5 226.8 779.8 233.2 780.8 234.0 785.0 234.0 785.5 232.5 785.0 231.2 785.2 229.5 784.5 227.8 785.2 226.5 784.8 218.8 785.2 217.0 784.8 214.8 785.2 213.2 784.8 208.5 785.2 206.0 784.5 205.0 784.5 203.8 785.2 202.5 785.2 196.5 783.5 195.2 778.2 195.5 777.0 196.0ZM734.8 196.0 734.0 197.0 731.8 198.2 729.8 200.8 730.0 202.0 731.2 203.2 733.8 203.2 736.0 200.5 737.2 200.0 740.5 200.2 742.5 199.2 746.0 199.8 750.5 203.8 751.0 205.0 751.0 208.0 748.8 212.0 745.2 215.8 742.0 218.2 739.2 222.0 730.0 230.8 729.8 233.0 731.0 234.0 732.8 233.8 734.2 234.2 738.8 233.2 744.2 234.2 746.0 233.8 749.0 234.0 752.5 233.5 755.0 234.0 757.8 233.5 758.0 231.5 757.5 230.5 755.2 229.2 753.2 229.8 752.0 229.2 750.5 229.8 748.5 229.5 747.0 230.5 744.2 229.8 741.5 230.8 739.5 230.0 738.0 228.2 739.5 226.0 748.2 218.8 754.8 211.0 756.0 207.0 756.0 204.8 754.5 202.5 754.8 200.0 753.8 199.5 752.0 200.5 747.5 195.2 745.5 195.8 744.2 197.2 741.8 195.2ZM1185.5 198.0 1182.8 196.8 1181.0 196.8 1179.5 195.8 1177.2 195.8 1175.5 195.0 1171.8 196.2 1170.5 196.2 1169.2 195.5 1166.8 195.8 1163.2 198.5 1161.0 198.0 1156.2 202.5 1155.5 203.8 1155.5 206.0 1153.5 208.8 1153.0 217.5 1153.5 221.0 1154.8 223.8 1157.2 227.5 1159.8 229.8 1162.5 230.5 1166.5 233.2 1172.0 233.2 1174.2 234.0 1182.0 232.0 1186.2 229.5 1189.2 226.8 1192.8 219.2 1193.2 212.5 1192.2 210.5 1192.5 208.2 1191.2 206.5 1190.8 204.0ZM1172.5 198.8 1178.0 200.0 1181.0 201.2 1185.0 204.0 1187.8 209.8 1188.2 216.8 1187.8 219.8 1186.2 222.2 1186.2 223.8 1185.8 224.2 1184.5 224.5 1179.8 228.8 1177.8 229.5 1175.2 229.2 1171.8 230.2 1170.0 229.0 1164.5 228.5 1164.0 226.8 1159.8 223.5 1158.5 221.0 1157.5 213.5 1158.2 209.8 1162.0 203.0 1167.2 200.8 1168.5 199.5ZM940.2 195.5 938.8 195.0 934.2 196.2 931.2 203.8 928.2 208.8 927.8 211.5 926.2 214.0 926.2 215.5 924.0 218.5 921.8 224.0 919.8 226.5 919.2 229.0 917.5 232.0 918.2 233.0 921.2 233.2 923.0 232.0 925.8 225.8 928.2 223.0 930.8 223.5 933.0 223.0 936.0 224.0 941.5 223.5 942.0 223.0 943.5 223.0 944.8 223.8 946.2 223.5 949.2 225.8 949.8 228.5 951.5 232.2 953.5 233.5 955.0 233.5 956.5 232.0 956.8 230.8 954.2 227.8 953.8 225.0 951.5 223.5 951.5 220.0 948.5 216.0 948.2 214.0 946.2 210.2 945.8 207.5 944.0 205.5 942.2 202.0 940.2 200.5 941.0 198.2 941.0 196.5ZM937.5 201.2 939.0 202.2 940.0 206.2 942.2 211.5 945.2 216.8 945.5 220.2 944.5 220.8 943.0 219.8 941.8 219.8 939.8 220.8 938.2 219.8 936.8 219.8 935.0 221.2 933.0 220.2 930.5 221.0 929.5 220.8 928.5 219.2 929.5 216.0 931.0 214.2 934.5 207.0 934.8 204.0ZM873.2 195.2 872.0 197.8 872.2 212.5 871.8 214.2 872.2 216.5 871.8 217.2 871.8 219.2 872.5 221.8 871.5 223.8 871.8 232.8 874.8 234.0 876.5 232.0 877.0 229.0 876.5 224.8 877.0 221.5 877.8 220.8 879.2 221.2 888.0 221.0 894.0 227.2 895.8 231.5 897.0 232.8 899.2 233.2 901.2 232.5 901.2 230.8 899.2 228.8 899.2 226.8 896.8 224.0 894.8 223.0 894.2 220.5 895.2 219.0 897.0 218.5 899.8 216.2 901.8 212.8 902.2 207.5 902.0 203.2 901.5 202.2 895.5 196.5 892.5 196.5 890.2 195.2 884.5 195.0 883.0 196.2 880.8 195.0 878.8 195.8 876.2 195.0ZM889.8 218.0 890.5 218.8 890.2 219.5 889.2 219.0ZM877.2 199.8 879.2 199.0 883.0 199.2 884.8 200.0 888.8 199.2 894.8 201.2 896.5 203.2 897.5 206.5 897.2 211.8 895.8 214.5 891.5 217.5 889.8 216.8 888.2 217.5 882.0 217.5 879.5 218.8 877.2 218.0 876.2 216.5 877.0 213.2 876.8 200.8ZM696.0 194.8 689.8 197.8 686.2 201.0 685.2 202.8 684.8 205.2 683.2 207.2 683.2 210.2 682.8 211.0 682.5 215.5 683.2 219.2 683.2 223.2 685.0 225.5 686.5 229.2 691.0 233.0 694.5 234.5 698.5 234.0 701.8 234.5 707.0 232.0 710.0 228.5 713.0 222.8 712.5 219.5 713.5 218.2 714.0 214.2 713.5 211.5 712.5 210.0 713.0 208.0 711.0 202.0 705.8 197.0 703.8 196.8 702.2 195.8 699.8 196.5 698.0 195.2ZM698.0 199.2 703.0 200.2 704.5 201.5 707.0 204.8 708.8 210.8 708.0 222.5 704.5 227.5 700.0 231.0 695.0 230.2 693.2 228.8 692.0 228.5 688.0 222.5 687.0 218.2 687.5 216.2 687.2 212.2 688.0 210.8 688.0 208.5 689.2 206.5 690.0 203.2 692.5 200.8ZM823.5 194.5 822.8 195.2 822.2 198.0 823.5 199.5 830.5 199.8 832.5 198.5 835.5 199.5 836.5 198.0 837.5 198.0 837.5 198.8 835.8 200.0 836.2 206.2 835.5 209.8 836.0 211.8 836.0 216.5 835.5 217.8 835.8 230.0 835.2 232.0 836.8 233.2 839.8 233.0 840.5 232.2 840.2 210.8 840.8 209.2 840.8 200.2 842.0 199.0 846.2 199.5 849.0 199.0 850.5 200.0 852.5 200.2 854.5 198.8 854.5 195.5 853.2 194.5 849.8 197.0 848.2 195.5 841.2 195.2 840.0 196.8 839.2 196.8 837.0 195.2 833.2 195.0 830.2 195.5 828.5 194.8 825.8 195.2ZM1227.8 194.0 1224.5 196.8 1223.0 196.2 1221.0 196.8 1220.0 198.0 1217.5 199.0 1214.8 201.2 1210.2 210.5 1210.5 215.5 1210.0 217.0 1211.0 218.5 1211.2 221.8 1212.5 224.2 1220.2 231.5 1222.2 231.5 1225.8 233.2 1227.0 232.5 1229.0 233.0 1236.2 232.8 1240.0 230.2 1243.2 229.5 1248.0 224.2 1250.0 219.5 1250.0 216.8 1250.8 214.8 1250.2 208.0 1249.0 205.0 1245.2 200.8 1238.8 195.2 1236.2 195.5 1234.2 194.5 1231.5 194.5 1231.5 195.0 1230.8 195.2 1230.0 194.5ZM1233.2 197.2 1234.8 199.2 1240.0 201.5 1243.2 204.5 1245.8 210.5 1245.8 216.8 1243.8 220.5 1243.2 223.5 1240.8 226.0 1237.5 227.5 1236.2 227.5 1234.2 229.2 1229.5 229.0 1229.0 229.8 1227.0 229.2 1225.5 227.8 1222.5 227.8 1218.5 224.2 1216.5 221.2 1216.5 219.0 1215.5 217.0 1215.0 212.0 1216.5 207.2 1219.0 204.0 1222.8 200.5 1225.2 199.2 1231.5 198.8Z"/></svg>
+  <div class="ld"><i></i></div>
+  <div class="t1">Magacin · učitavam…</div>
+  <div class="t2">Nemanja Mitrović</div>
+</div>
+
+<header class="top">
+  <div class="brand">
+    <div class="logo" aria-label="JMD 021 Trade DOO"><svg role="img" aria-hidden="true" viewBox="60 58 1196 196" ><g fill="none" stroke="#BE1E2D" stroke-width="8.5" stroke-linecap="round" stroke-linejoin="round">
+<path d="M157.5 108.5C163 84 182 67.5 203 67.5C227 67.5 243.5 86 243.5 108C243.5 124 241 136 239 146"/>
+<path d="M157.5 108.5C152 82 136 69 115 69C92 69 74.5 85 74.5 107C74.5 125 77.5 143 81.5 155Q84 163 92.5 163H105Q112.5 163 112.5 155V110C112.5 105 116.5 102 121.2 102C126 102 130 105 130 110V219C130 223 134.5 226 140.6 226C146.7 226 151.2 223 151.2 219V132C151.2 127 156 124 161.9 124C168 124 172.5 127 172.5 132V153C172.5 158.5 175.5 162.5 181.5 162.5H277.5"/>
+<path d="M153.8 244.5Q198 209 229 162.5"/></g><path fill="#BE1E2D" fill-rule="evenodd" d="M245.0 158.8 245.0 165.2 262.5 166.0 271.5 166.0 275.5 165.0 276.8 164.0 277.2 163.0 277.2 161.8 276.8 160.8 273.0 159.5ZM530.2 108.8 529.5 110.5 529.5 116.8 529.0 118.5 528.8 123.8 529.0 126.8 528.5 154.2 527.5 182.5 527.2 226.0 528.2 227.5 530.2 228.2 531.5 228.0 533.5 228.8 553.5 229.2 581.8 229.0 593.8 229.5 599.0 229.0 603.5 228.0 605.5 228.0 607.8 227.0 609.2 227.0 615.0 225.5 619.2 223.5 622.8 222.8 624.2 221.5 631.0 218.2 635.8 214.2 637.5 213.5 642.2 209.0 644.2 206.5 645.5 203.8 649.5 198.2 651.2 194.8 651.5 193.2 653.2 190.2 653.2 187.8 655.2 181.8 655.2 180.0 656.0 177.0 656.2 160.5 655.5 158.5 655.2 154.0 652.5 148.2 652.0 145.5 650.5 143.2 647.0 135.5 640.5 127.5 639.5 127.0 633.5 121.2 626.5 116.8 625.2 116.5 623.0 115.2 619.5 114.8 614.8 112.0 611.5 111.2 608.5 109.8 604.8 108.8 602.5 108.8 597.2 107.8 592.8 107.8 589.0 107.2 561.8 107.0 555.0 106.5 545.8 106.5 542.2 106.8 540.8 107.2 538.2 106.8 535.0 106.8 533.0 107.2ZM572.2 136.0 574.5 135.5 578.8 136.0 593.8 136.0 598.2 137.2 601.2 138.5 607.0 141.8 610.5 145.2 614.5 152.2 616.8 157.8 617.2 161.0 617.2 171.5 615.8 179.0 614.2 182.5 610.2 189.2 608.8 190.8 605.5 192.8 603.2 194.8 599.8 196.5 590.8 198.8 572.2 198.8 570.0 197.8 567.5 194.8 566.8 189.2 567.5 144.8 569.5 138.5 571.0 136.8ZM361.0 105.5 359.8 109.2 359.5 123.5 359.0 125.8 359.2 128.8 358.2 171.8 358.2 216.0 358.8 220.5 358.5 223.8 359.2 225.5 360.0 226.2 362.0 227.0 365.5 227.2 389.0 227.5 391.0 227.2 393.2 225.5 394.0 223.2 394.2 214.0 394.2 187.0 394.5 185.0 396.0 181.5 397.8 179.2 399.0 179.2 401.8 182.8 404.5 185.2 404.8 186.8 406.0 188.8 406.8 191.2 410.2 195.0 411.0 196.8 414.2 199.8 415.8 202.8 415.8 204.0 416.8 206.0 418.8 207.8 419.5 210.2 421.5 214.0 423.5 215.2 426.2 216.0 436.8 216.2 440.0 215.5 441.5 214.2 442.5 212.8 443.2 210.2 444.8 208.5 446.0 207.8 448.8 201.8 452.0 198.0 456.0 190.2 458.2 187.8 458.5 186.2 459.2 185.0 463.0 181.8 464.0 179.8 465.0 178.8 466.2 178.8 467.8 180.0 468.2 181.2 468.8 187.0 469.5 190.2 469.0 221.5 469.5 224.2 470.8 226.5 472.5 227.5 474.5 228.0 479.0 227.8 493.2 228.2 501.5 228.2 504.0 226.5 504.5 223.5 504.8 215.8 504.5 207.2 505.5 153.0 505.5 111.0 505.0 108.2 504.0 107.0 501.8 106.0 497.0 106.0 492.5 105.5 475.2 105.5 472.8 106.8 469.8 110.2 469.2 112.5 468.2 114.5 465.8 117.5 463.0 122.2 462.2 124.2 460.8 126.2 460.2 127.8 454.5 135.8 447.8 148.5 444.8 152.2 443.0 156.2 440.8 159.5 438.8 161.5 436.2 166.0 434.0 168.2 433.0 168.5 431.2 167.5 429.0 165.2 427.8 163.2 424.5 159.8 423.8 157.8 421.8 155.5 421.0 153.2 416.2 145.2 414.8 141.5 412.5 139.0 412.0 137.5 409.8 134.2 407.8 130.0 405.2 127.0 404.5 125.2 403.2 123.8 401.5 119.5 397.2 113.8 394.2 108.0 392.2 105.5 390.2 104.5 364.2 104.0 362.2 104.5ZM336.5 104.5 335.2 104.0 325.0 103.5 304.0 103.2 302.8 103.8 300.8 106.0 300.0 107.8 299.2 118.2 299.2 137.5 298.5 156.0 298.5 171.8 298.0 186.8 296.5 192.8 294.5 196.0 292.8 197.5 287.0 199.5 282.2 199.5 278.0 199.0 276.0 198.2 272.2 195.5 270.5 193.5 267.5 192.2 266.0 191.0 263.0 190.8 262.0 191.2 260.8 192.8 259.5 195.2 257.5 197.2 255.5 198.5 254.0 200.5 252.0 202.2 250.5 205.2 247.0 208.8 246.5 209.8 246.2 212.2 246.8 213.2 248.2 214.5 249.0 216.0 252.0 219.5 255.8 221.8 262.2 224.2 265.5 226.0 267.8 226.8 274.5 227.5 277.2 228.5 293.2 229.0 297.2 228.2 301.5 228.2 304.2 227.0 310.2 225.2 315.8 222.5 318.2 221.8 323.8 217.5 324.5 215.8 328.5 211.5 331.2 206.5 332.0 205.8 332.5 204.2 334.2 202.0 334.2 198.8 335.0 196.5 335.2 193.8 336.2 191.2 337.2 184.2 337.2 172.2 337.8 171.0 338.2 162.5 338.5 107.8ZM245.0 102.0 245.0 122.2 245.5 118.8 245.5 103.5Z"/><rect x="688" y="163.3" width="558" height="5.4" rx="2.7" fill="#BE1E2D"/><path fill="#6B6B6B" fill-rule="evenodd" d="M1099.0 195.8 1099.0 196.5 1100.2 198.0 1099.2 200.5 1099.0 211.5 1099.5 214.2 1099.0 217.5 1099.5 219.0 1099.0 221.0 1099.0 233.2 1099.8 234.0 1100.8 234.0 1102.2 233.0 1118.0 233.5 1127.2 230.5 1134.0 223.5 1136.2 215.8 1135.5 212.0 1134.5 210.0 1134.5 207.5 1132.5 204.2 1131.2 203.5 1130.8 202.0 1125.0 197.8 1122.8 197.5 1120.2 196.0 1119.5 196.2 1118.8 197.5 1116.5 197.5 1115.0 195.5 1113.5 196.0 1109.2 195.8 1107.2 197.2 1105.2 195.5 1103.5 196.0 1102.5 197.0 1100.2 195.5ZM1105.2 199.5 1106.8 199.2 1109.2 200.2 1111.8 199.8 1114.2 200.2 1118.0 200.0 1120.5 201.0 1122.2 201.0 1129.5 207.5 1130.8 212.2 1130.5 217.5 1129.0 222.5 1125.0 226.8 1121.8 227.2 1120.2 228.5 1115.2 229.8 1111.0 228.8 1108.5 229.8 1103.2 229.8 1103.0 228.5 1103.8 227.0 1103.8 224.2 1104.2 223.2 1104.2 220.0 1103.5 218.8 1104.2 213.8 1104.2 210.5 1103.8 209.5 1104.2 207.0 1104.0 202.0ZM974.8 196.0 974.5 212.8 975.0 216.8 974.5 218.5 974.5 231.5 975.2 232.5 977.0 233.2 981.0 232.8 984.0 233.5 989.0 232.8 993.8 233.2 995.5 232.2 999.0 232.5 1004.5 229.2 1007.8 226.5 1011.0 220.2 1010.2 217.0 1011.2 215.8 1010.8 212.0 1011.2 209.5 1009.8 207.2 1009.0 204.2 1008.2 203.2 1007.0 202.8 1002.5 198.2 1000.8 198.2 997.2 196.5 996.5 197.8 995.2 197.8 994.0 196.0 990.5 196.0 988.2 195.5 986.5 196.8 985.5 196.8 984.5 195.5 983.8 195.5 982.2 197.0 978.0 195.5 975.5 195.5ZM980.5 199.5 986.5 200.2 990.8 199.8 995.2 200.5 1000.0 202.2 1003.8 205.2 1006.8 212.5 1006.2 218.0 1004.8 221.8 1003.0 223.8 1002.8 225.2 1001.8 226.0 1000.8 226.0 1000.8 227.5 1000.0 228.2 998.5 227.8 997.0 228.8 994.2 228.8 993.0 230.5 992.0 230.5 990.5 229.0 983.8 229.2 982.8 230.0 981.8 230.0 979.5 228.0 979.0 224.8 979.5 223.5 979.2 220.0 979.8 218.8 979.5 216.0 980.0 213.0 979.2 209.5 979.2 206.2 979.8 205.0 979.5 200.5ZM1032.0 195.2 1031.5 198.0 1031.8 203.8 1031.2 204.8 1031.8 213.2 1031.2 214.5 1031.8 219.8 1031.2 221.8 1031.8 224.2 1031.5 229.8 1031.0 231.0 1031.8 233.0 1032.5 233.5 1039.5 232.8 1040.8 233.2 1057.8 233.8 1059.5 231.8 1059.2 230.2 1058.0 228.8 1055.5 230.0 1054.0 229.2 1049.0 229.5 1047.8 229.0 1045.2 230.0 1044.0 229.0 1043.0 229.0 1039.8 230.2 1036.0 228.8 1036.5 220.8 1036.0 217.8 1037.2 216.5 1038.5 216.0 1043.8 216.0 1047.2 217.0 1049.2 216.5 1055.8 216.8 1056.2 216.2 1056.2 214.5 1055.0 213.0 1053.5 212.2 1045.2 212.2 1044.0 212.8 1040.8 212.5 1038.0 213.0 1036.0 212.8 1035.8 212.0 1036.2 207.0 1036.0 203.0 1036.8 201.2 1038.2 199.8 1046.5 200.0 1048.2 201.2 1050.2 200.5 1053.2 200.8 1055.2 200.2 1056.5 201.2 1057.5 201.2 1059.2 198.8 1058.2 196.2 1056.8 195.8 1055.5 196.5 1053.5 196.5 1051.5 195.5 1049.2 196.8 1048.2 196.8 1046.8 195.8 1043.5 196.5 1041.2 195.5 1039.2 196.8 1038.2 196.8 1037.0 195.8 1034.5 196.5ZM773.8 195.2 771.2 197.8 771.2 199.2 771.8 199.8 779.0 199.0 780.2 200.0 780.8 201.2 780.5 211.8 780.0 213.0 780.5 226.8 779.8 233.2 780.8 234.0 785.0 234.0 785.5 232.5 785.0 231.2 785.2 229.5 784.5 227.8 785.2 226.5 784.8 218.8 785.2 217.0 784.8 214.8 785.2 213.2 784.8 208.5 785.2 206.0 784.5 205.0 784.5 203.8 785.2 202.5 785.2 196.5 783.5 195.2 778.2 195.5 777.0 196.0ZM734.8 196.0 734.0 197.0 731.8 198.2 729.8 200.8 730.0 202.0 731.2 203.2 733.8 203.2 736.0 200.5 737.2 200.0 740.5 200.2 742.5 199.2 746.0 199.8 750.5 203.8 751.0 205.0 751.0 208.0 748.8 212.0 745.2 215.8 742.0 218.2 739.2 222.0 730.0 230.8 729.8 233.0 731.0 234.0 732.8 233.8 734.2 234.2 738.8 233.2 744.2 234.2 746.0 233.8 749.0 234.0 752.5 233.5 755.0 234.0 757.8 233.5 758.0 231.5 757.5 230.5 755.2 229.2 753.2 229.8 752.0 229.2 750.5 229.8 748.5 229.5 747.0 230.5 744.2 229.8 741.5 230.8 739.5 230.0 738.0 228.2 739.5 226.0 748.2 218.8 754.8 211.0 756.0 207.0 756.0 204.8 754.5 202.5 754.8 200.0 753.8 199.5 752.0 200.5 747.5 195.2 745.5 195.8 744.2 197.2 741.8 195.2ZM1185.5 198.0 1182.8 196.8 1181.0 196.8 1179.5 195.8 1177.2 195.8 1175.5 195.0 1171.8 196.2 1170.5 196.2 1169.2 195.5 1166.8 195.8 1163.2 198.5 1161.0 198.0 1156.2 202.5 1155.5 203.8 1155.5 206.0 1153.5 208.8 1153.0 217.5 1153.5 221.0 1154.8 223.8 1157.2 227.5 1159.8 229.8 1162.5 230.5 1166.5 233.2 1172.0 233.2 1174.2 234.0 1182.0 232.0 1186.2 229.5 1189.2 226.8 1192.8 219.2 1193.2 212.5 1192.2 210.5 1192.5 208.2 1191.2 206.5 1190.8 204.0ZM1172.5 198.8 1178.0 200.0 1181.0 201.2 1185.0 204.0 1187.8 209.8 1188.2 216.8 1187.8 219.8 1186.2 222.2 1186.2 223.8 1185.8 224.2 1184.5 224.5 1179.8 228.8 1177.8 229.5 1175.2 229.2 1171.8 230.2 1170.0 229.0 1164.5 228.5 1164.0 226.8 1159.8 223.5 1158.5 221.0 1157.5 213.5 1158.2 209.8 1162.0 203.0 1167.2 200.8 1168.5 199.5ZM940.2 195.5 938.8 195.0 934.2 196.2 931.2 203.8 928.2 208.8 927.8 211.5 926.2 214.0 926.2 215.5 924.0 218.5 921.8 224.0 919.8 226.5 919.2 229.0 917.5 232.0 918.2 233.0 921.2 233.2 923.0 232.0 925.8 225.8 928.2 223.0 930.8 223.5 933.0 223.0 936.0 224.0 941.5 223.5 942.0 223.0 943.5 223.0 944.8 223.8 946.2 223.5 949.2 225.8 949.8 228.5 951.5 232.2 953.5 233.5 955.0 233.5 956.5 232.0 956.8 230.8 954.2 227.8 953.8 225.0 951.5 223.5 951.5 220.0 948.5 216.0 948.2 214.0 946.2 210.2 945.8 207.5 944.0 205.5 942.2 202.0 940.2 200.5 941.0 198.2 941.0 196.5ZM937.5 201.2 939.0 202.2 940.0 206.2 942.2 211.5 945.2 216.8 945.5 220.2 944.5 220.8 943.0 219.8 941.8 219.8 939.8 220.8 938.2 219.8 936.8 219.8 935.0 221.2 933.0 220.2 930.5 221.0 929.5 220.8 928.5 219.2 929.5 216.0 931.0 214.2 934.5 207.0 934.8 204.0ZM873.2 195.2 872.0 197.8 872.2 212.5 871.8 214.2 872.2 216.5 871.8 217.2 871.8 219.2 872.5 221.8 871.5 223.8 871.8 232.8 874.8 234.0 876.5 232.0 877.0 229.0 876.5 224.8 877.0 221.5 877.8 220.8 879.2 221.2 888.0 221.0 894.0 227.2 895.8 231.5 897.0 232.8 899.2 233.2 901.2 232.5 901.2 230.8 899.2 228.8 899.2 226.8 896.8 224.0 894.8 223.0 894.2 220.5 895.2 219.0 897.0 218.5 899.8 216.2 901.8 212.8 902.2 207.5 902.0 203.2 901.5 202.2 895.5 196.5 892.5 196.5 890.2 195.2 884.5 195.0 883.0 196.2 880.8 195.0 878.8 195.8 876.2 195.0ZM889.8 218.0 890.5 218.8 890.2 219.5 889.2 219.0ZM877.2 199.8 879.2 199.0 883.0 199.2 884.8 200.0 888.8 199.2 894.8 201.2 896.5 203.2 897.5 206.5 897.2 211.8 895.8 214.5 891.5 217.5 889.8 216.8 888.2 217.5 882.0 217.5 879.5 218.8 877.2 218.0 876.2 216.5 877.0 213.2 876.8 200.8ZM696.0 194.8 689.8 197.8 686.2 201.0 685.2 202.8 684.8 205.2 683.2 207.2 683.2 210.2 682.8 211.0 682.5 215.5 683.2 219.2 683.2 223.2 685.0 225.5 686.5 229.2 691.0 233.0 694.5 234.5 698.5 234.0 701.8 234.5 707.0 232.0 710.0 228.5 713.0 222.8 712.5 219.5 713.5 218.2 714.0 214.2 713.5 211.5 712.5 210.0 713.0 208.0 711.0 202.0 705.8 197.0 703.8 196.8 702.2 195.8 699.8 196.5 698.0 195.2ZM698.0 199.2 703.0 200.2 704.5 201.5 707.0 204.8 708.8 210.8 708.0 222.5 704.5 227.5 700.0 231.0 695.0 230.2 693.2 228.8 692.0 228.5 688.0 222.5 687.0 218.2 687.5 216.2 687.2 212.2 688.0 210.8 688.0 208.5 689.2 206.5 690.0 203.2 692.5 200.8ZM823.5 194.5 822.8 195.2 822.2 198.0 823.5 199.5 830.5 199.8 832.5 198.5 835.5 199.5 836.5 198.0 837.5 198.0 837.5 198.8 835.8 200.0 836.2 206.2 835.5 209.8 836.0 211.8 836.0 216.5 835.5 217.8 835.8 230.0 835.2 232.0 836.8 233.2 839.8 233.0 840.5 232.2 840.2 210.8 840.8 209.2 840.8 200.2 842.0 199.0 846.2 199.5 849.0 199.0 850.5 200.0 852.5 200.2 854.5 198.8 854.5 195.5 853.2 194.5 849.8 197.0 848.2 195.5 841.2 195.2 840.0 196.8 839.2 196.8 837.0 195.2 833.2 195.0 830.2 195.5 828.5 194.8 825.8 195.2ZM1227.8 194.0 1224.5 196.8 1223.0 196.2 1221.0 196.8 1220.0 198.0 1217.5 199.0 1214.8 201.2 1210.2 210.5 1210.5 215.5 1210.0 217.0 1211.0 218.5 1211.2 221.8 1212.5 224.2 1220.2 231.5 1222.2 231.5 1225.8 233.2 1227.0 232.5 1229.0 233.0 1236.2 232.8 1240.0 230.2 1243.2 229.5 1248.0 224.2 1250.0 219.5 1250.0 216.8 1250.8 214.8 1250.2 208.0 1249.0 205.0 1245.2 200.8 1238.8 195.2 1236.2 195.5 1234.2 194.5 1231.5 194.5 1231.5 195.0 1230.8 195.2 1230.0 194.5ZM1233.2 197.2 1234.8 199.2 1240.0 201.5 1243.2 204.5 1245.8 210.5 1245.8 216.8 1243.8 220.5 1243.2 223.5 1240.8 226.0 1237.5 227.5 1236.2 227.5 1234.2 229.2 1229.5 229.0 1229.0 229.8 1227.0 229.2 1225.5 227.8 1222.5 227.8 1218.5 224.2 1216.5 221.2 1216.5 219.0 1215.5 217.0 1215.0 212.0 1216.5 207.2 1219.0 204.0 1222.8 200.5 1225.2 199.2 1231.5 198.8Z"/></svg></div>
+    <div class="who"><div class="role">Prezenter <b>K10</b></div><div class="app">Magacin</div></div>
+  </div>
+  <div class="nav">
+    <button class="arrow" id="prev" aria-label="Prethodni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <div class="label" id="navLabel"></div>
+    <button class="arrow" id="next" aria-label="Sledeći"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
+  </div>
+</header>
+
+<main id="dayView">
+  <section>
+    <h2><span>Stanje proizvoda</span><span class="hint">dodirni za ulaz / izlaz</span></h2>
+    <div class="grid" id="products"></div>
+  </section>
+  <section class="entries-sec">
+    <h2><span>Kretanja ovog dana</span><span id="dCount"></span></h2>
+    <div class="list" id="entries"></div>
+  </section>
+</main>
+
+<main id="monthView" hidden>
+  <section class="sum">
+    <div class="stat"><div class="k">Primljeno meseca</div><div class="v" id="mIn">0</div></div>
+    <div class="stat hot"><div class="k">Izdato meseca</div><div class="v" id="mOut">0</div></div>
+    <div class="monthline"><span>Dana sa kretanjem <b id="mDays">0</b></span><span>na kraju meseca <b id="mEnd">0</b></span></div>
+  </section>
+  <section>
+    <h2>Ulaz i izlaz po danima</h2>
+    <div class="chart"><div class="ch-r" id="chDayR"></div><div class="ch-svg" id="chDay"></div>
+      <div class="ch-legend"><span><i style="background:#1F7A4D"></i>primljeno</span><span><i style="background:#B01F2C"></i>izdato</span></div></div>
+  </section>
+  <section>
+    <h2>Po proizvodu</h2>
+    <div class="list wrap"><table id="byProduct"></table></div>
+  </section>
+  <section>
+    <h2><span>Po danima</span><span class="hint">dodirni dan za detalje</span></h2>
+    <div class="list wrap"><table id="byDay"></table></div>
+  </section>
+  <section>
+    <button class="btn" id="xlsBtn">Preuzmi Excel za ovaj mesec</button>
+    <div class="msg" id="xlsMsg" style="margin-top:6px">Stanje po proizvodima i sva kretanja u mesecu.</div>
+  </section>
+</main>
+
+<main id="stockView" hidden>
+  <section>
+    <h2><span>Trenutno stanje</span><span class="hint">dodirni za ulaz / izlaz</span></h2>
+    <div class="list" id="stockList"></div>
+  </section>
+  <section>
+    <button class="btn" id="dayRepBtn">Izveštaj za danas (slika)</button>
+    <div class="msg" id="dayRepMsg" style="margin-top:6px">Stanje svih proizvoda na kraju današnjeg dana.</div>
+  </section>
+  <section class="backup">
+    <h2>Rezervna kopija</h2>
+    <div class="btns"><button class="btn2" id="bkSend">Pošalji kopiju</button><button class="btn2" id="bkFileBtn">Učitaj iz fajla</button></div>
+    <input type="file" id="bkFile" accept=".json,.txt,application/json,text/plain" hidden>
+    <button class="linkbtn" id="bkOpen">ili nalepi tekst kopije</button>
+    <div id="bkBox" hidden class="backup"><textarea id="bkText" placeholder="Nalepi ovde tekst kopije"></textarea><button class="btn2" id="bkLoad">Učitaj kopiju</button></div>
+    <div class="msg" id="bkMsg">Podaci se čuvaju samo u ovom telefonu. Povremeno pošalji kopiju sebi, da se ništa ne izgubi.</div>
+  </section>
+</main>
+
+<nav class="tabs" role="tablist">
+  <button role="tab" id="tabDay" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M8 3v4M16 3v4M3.5 10h17"/><path d="M12 13v4M10 15h4"/></svg>Dan</button>
+  <button role="tab" id="tabMonth" aria-selected="false" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg>Mesec</button>
+  <button role="tab" id="tabStock" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5L12 4l8.5 4.5v10.5a1 1 0 0 1-1 1h-15a1 1 0 0 1-1-1Z"/><path d="M7.5 20v-7h9v7M7.5 16.5h9"/></svg>Magacin</button>
+</nav>
+
+<div class="veil" id="veil"></div>
+<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+  <div class="grab"></div>
+  <div style="display:flex;align-items:center;gap:12px"><span class="ico lg" id="sheetIco"></span><div><h3 id="sheetTitle"></h3><div class="sub" id="sheetSub"></div></div></div>
+  <div class="seg" id="seg"><button data-t="in">Primljeno +</button><button data-t="out">Izdato −</button><button data-t="set">Popis =</button></div>
+  <div class="qrow"><button class="pm" id="qMinus" aria-label="Manje">−</button><div class="num"><span id="qNum">1</span><small id="qLbl">komada</small></div><button class="pm" id="qPlus" aria-label="Više">+</button></div>
+  <div class="chips" id="chips"><button data-c="1">1</button><button data-c="2">2</button><button data-c="3">3</button><button data-c="5">5</button><button data-c="10">10</button></div>
+  <div class="preview" id="preview"></div>
+  <button class="btn go" id="go">Potvrdi</button>
+  <button class="cancel" id="cancel">Otkaži</button>
+</div>
+<div class="toast" id="toast"><span id="toastText"></span><button id="undo">Poništi</button></div>
+
+<script>
+/* ---------- proizvodi ---------- */
+const PRODUCTS=[
+  {id:"aloajastuk",name:"Aloa jastuk"},
+  {id:"aloaprekrivac",name:"Aloa prekrivač"},
+  {id:"kamilica",name:"Jastuk kamilica"},
+  {id:"kreme",name:"Kreme"},
+  {id:"korektor",name:"Korektor"},
+  {id:"bioterapija",name:"Bioterapija"},
+  {id:"ametist",name:"Ametist"},
+  {id:"pojas",name:"Magnetni pojas"},
+  {id:"q10",name:"Koenzim Q10"},
+  {id:"magnezijum",name:"Magnezijum Zn"},
+];
+const LOW=2;
+
+/* ---------- ikonice ---------- */
+function topper(y0,h,stitch){
+  const f=y0+11;
+  let d=`<path class="fl" d="M12 ${y0}H46L37 ${f}H2Z"/><path class="fl2" d="M2 ${f}H37V${f+h}H2Z"/><path class="fl2" d="M37 ${f}L46 ${y0}V${y0+h}L37 ${f+h}Z"/>`;
+  if(stitch)d+=`<path d="M10 ${f+2.5}V${f+h-2.5}M19.5 ${f+2.5}V${f+h-2.5}M29 ${f+2.5}V${f+h-2.5}" stroke-dasharray="1.5 2.2"/><path d="M19 ${y0+2.5}L15 ${f-2.5}M29 ${y0+2.5}L25 ${f-2.5}M39 ${y0+2.5}L35 ${f-2.5}" stroke-dasharray="1.5 2.2"/>`;
+  return d;
+}
+const svg=inner=>`<svg viewBox="0 0 48 48" aria-hidden="true">${inner}</svg>`;
+const PILLOW_AT=o=>`<g transform="translate(0 ${o})"><path class="fl" d="M5 24C3 17 6 13 10 13H38C42 13 45 17 43 24C45 31 42 36 38 36H10C6 36 3 31 5 24Z"/><path d="M10 17.5C15 16.5 33 16.5 38 17.5M10 31.5C15 32.5 33 32.5 38 31.5" stroke-width="1.2" stroke-dasharray="1.5 2.2"/></g>`;
+const ALOE=`<path class="leaf" d="M39 24C35 17 35 9 39 3C42 10 42 17 39 24Z"/><path class="leaf" d="M39 24C38 16 42 11 47 9C46 16 43 21 39 24Z"/><path class="leaf" d="M39 24C38 17 34 13 30 12C31 18 34 22 39 24Z"/>`;
+const ICONS={
+  aloajastuk: svg(PILLOW_AT(6)+ALOE),
+  aloaprekrivac: svg(`<path class="fl" d="M4 22H36a4 4 0 0 1 4 4v10a4 4 0 0 1-4 4H4Z"/><path class="fl2" d="M4 22a4 4 0 0 0 0 8h30"/><path d="M4 35h36" stroke-width="1.2" stroke-dasharray="1.5 2.2"/>`+ALOE),
+  kamilica: svg(`<path class="fl" d="M5 30C3 23 6 19 10 19H38C42 19 45 23 43 30C45 37 42 42 38 42H10C6 42 3 37 5 30Z"/>`+
+    [0,45,90,135,180,225,270,315].map(a=>`<ellipse class="pet" cx="36" cy="5.5" rx="2.3" ry="4.3" transform="rotate(${a} 36 11)"/>`).join("")+`<circle class="ctr" cx="36" cy="11" r="3"/>`),
+  kreme: svg(`<rect class="fl" x="9" y="21" width="30" height="21" rx="5"/><rect x="7" y="13" width="34" height="9" rx="3" class="fl2"/><path d="M15 31h18" stroke-width="1.4"/><path d="M19 35.5h10" stroke-width="1.2"/>`),
+  korektor: svg(topper(17,5,false)),
+  bioterapija: svg(topper(13,12,true)),
+  ametist: svg(topper(21,12,true)+`<path class="gem" d="M24 3L29.5 8.5L24 16L18.5 8.5Z"/><path d="M18.5 8.5H29.5M22 8.5L24 16L26 8.5" stroke-width="1.2"/>`),
+  pojas: svg(`<path class="fl" d="M3 18C14 23 34 23 45 18V29C34 34 14 34 3 29Z"/><rect class="fl2" x="19" y="19.5" width="10" height="13" rx="2"/><path d="M24 22.5V29.5" stroke-width="1.4"/><circle class="mag" cx="9.5" cy="24.5" r="2.4"/><circle class="mag" cx="38.5" cy="24.5" r="2.4"/>`),
+  q10: svg(`<rect x="17" y="4" width="14" height="6" rx="1.5" class="fl2"/><path class="fl" d="M15 10h18v31a3 3 0 0 1-3 3H18a3 3 0 0 1-3-3Z"/><rect x="15" y="19" width="18" height="13" fill="#fff"/><text x="24" y="28.5" text-anchor="middle" class="lbl">Q10</text>`),
+  magnezijum: svg(`<rect x="17" y="4" width="14" height="6" rx="1.5" class="fl2"/><path class="fl" d="M15 10h18v31a3 3 0 0 1-3 3H18a3 3 0 0 1-3-3Z"/><rect x="15" y="19" width="18" height="13" fill="#fff"/><text x="24" y="28.5" text-anchor="middle" class="lbl">Mg</text><circle cx="40" cy="38" r="5" class="fl2"/><path d="M36.5 38h7" stroke-width="1.2"/>`),
+};
+
+/* ---------- pomoćno ---------- */
+const MONTHS=["januar","februar","mart","april","maj","jun","jul","avgust","septembar","oktobar","novembar","decembar"];
+const MGEN=["januara","februara","marta","aprila","maja","juna","jula","avgusta","septembra","oktobra","novembra","decembra"];
+const DAYS=["nedelja","ponedeljak","utorak","sreda","četvrtak","petak","subota"];
+const DSHORT=["ned","pon","uto","sre","čet","pet","sub"];
+const $=id=>document.getElementById(id);
+const pad=n=>String(n).padStart(2,"0");
+const iso=d=>d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
+const parse=s=>{const [y,m,d]=s.split("-").map(Number);return new Date(y,m-1,d)};
+const todayIso=()=>iso(new Date());
+const cap=s=>s[0].toUpperCase()+s.slice(1);
+const nf=new Intl.NumberFormat("de-DE");
+const fmt=n=>nf.format(n);
+const kom=n=>fmt(n)+'<em>kom</em>';
+const pname=id=>(PRODUCTS.find(p=>p.id===id)||{name:id}).name;
+const TYPE={in:"Primljeno",out:"Izdato",set:"Popis"};
+
+/* ---------- podaci (samo u telefonu) ---------- */
+const KEY="jmd-magacin-k10";
+function load(){try{const o=JSON.parse(localStorage.getItem(KEY)||"null");if(o&&Array.isArray(o.moves))return o.moves}catch(e){}return[]}
+let moves=load();
+function save(){try{localStorage.setItem(KEY,JSON.stringify({app:"jmd-magacin",v:1,code:"K10",moves}))}catch(e){toast("Greška pri čuvanju!",false)}}
+const byOrder=(a,b)=>a.d<b.d?-1:a.d>b.d?1:a.ts-b.ts;
+
+/* stanje na kraju zadatog dana; after[id] = stanje posle svakog kretanja */
+function stockAt(date,after){
+  const s={};PRODUCTS.forEach(p=>s[p.id]=0);
+  [...moves].sort(byOrder).forEach(m=>{if(m.d>date)return;
+    if(!(m.p in s))s[m.p]=0;
+    if(m.t==="in")s[m.p]+=m.q;else if(m.t==="out")s[m.p]-=m.q;else s[m.p]=m.q;
+    if(after)after[m.id]=s[m.p]});
+  return s;
+}
+function dayMoves(d){return moves.filter(m=>m.d===d).sort(byOrder)}
+function lastMove(pid){let l=null;for(const m of moves)if(m.p===pid&&(!l||byOrder(m,l)>0))l=m;return l}
+const cls=q=>q<=0?"zero":q<=LOW?"low":"";
+
+/* ---------- stanje ekrana ---------- */
+let view="day",selDate=todayIso(),curMonth=selDate.slice(0,7);
+let sheetP=null,sheetT="out",sheetQ=1,lastAdded=null,toastTimer=null,confirmId=null;
+
+/* ---------- akcije ---------- */
+function addMove(p,t,q){
+  const d=new Date();
+  const m={id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),d:selDate,p:p.id,t,q,ts:Date.now(),time:pad(d.getHours())+":"+pad(d.getMinutes())};
+  moves.push(m);save();lastAdded=m.id;render();
+  toast(`${p.name}: ${t==="in"?"+"+q:t==="out"?"−"+q:"popis "+q} kom`,true);
+}
+function removeMove(id){moves=moves.filter(m=>m.id!==id);save();render()}
+
+/* ---------- prikaz ---------- */
+function renderNav(){
+  const l=$("navLabel");$("prev").classList.toggle("off",view==="stock");$("next").classList.toggle("off",view==="stock");
+  if(view==="day"){
+    const d=parse(selDate),isT=selDate===todayIso();
+    l.innerHTML=`${cap(DAYS[d.getDay()])}, ${d.getDate()}. ${MONTHS[d.getMonth()]}<small>${isT?"danas":`<button class="today-btn" id="goToday">Nazad na danas</button>`}</small>`;
+  }else if(view==="month"){
+    const [y,m]=curMonth.split("-").map(Number),isC=curMonth===todayIso().slice(0,7);
+    l.innerHTML=`${cap(MONTHS[m-1])} ${y}<small>${isC?"tekući mesec":`<button class="today-btn" id="goToday">Tekući mesec</button>`}</small>`;
+  }else{
+    const d=new Date();l.innerHTML=`Stanje magacina<small>danas, ${d.getDate()}. ${MGEN[d.getMonth()]}</small>`;
+  }
+  const g=$("goToday");if(g)g.onclick=()=>{if(view==="month")setMonth(todayIso().slice(0,7));else setDate(todayIso())};
+}
+function renderDay(){
+  const st=stockAt(selDate),items=dayMoves(selDate);
+  let i=0,o=0;items.forEach(m=>{if(m.t==="in")i+=m.q;else if(m.t==="out")o+=m.q});
+  
+  const tot=PRODUCTS.reduce((a,p)=>a+Math.max(0,st[p.id]),0),zero=PRODUCTS.filter(p=>st[p.id]<=0).length;
+  
+  $("products").innerHTML=PRODUCTS.map(p=>`<button class="tile" data-p="${p.id}"><span class="ico">${ICONS[p.id]}</span><span class="tx"><span class="n">${p.name}</span><span class="st ${cls(st[p.id])}">${fmt(st[p.id])} kom</span></span></button>`).join("");
+  $("dCount").textContent=items.length?items.length+(items.length===1?" unos":" unosa"):"";
+  const after={};stockAt(selDate,after);
+  const el=$("entries");
+  if(!items.length){el.innerHTML=`<div class="empty">Nema kretanja za ovaj dan.<br>Dodirni proizvod iznad da upišeš ulaz ili izlaz.</div>`;return}
+  el.innerHTML=[...items].reverse().map(m=>`
+    <div class="item">
+      <span class="ico sm">${ICONS[m.p]||""}</span>
+      <div class="main"><div class="t">${pname(m.p)} <span class="tag ${m.t}">${TYPE[m.t]}</span></div><div class="s">${m.time||""}</div></div>
+      ${confirmId===m.id
+        ?`<div class="confirm"><button class="yes" data-yes="${m.id}">Obriši</button><button class="no" data-no="1">Ne</button></div>`
+        :`<div class="amt ${m.t}">${m.t==="in"?"+":m.t==="out"?"−":"="}${fmt(m.q)}<small>stanje ${fmt(after[m.id])}</small></div>
+          <button class="del" data-del="${m.id}" aria-label="Obriši"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>`}
+    </div>`).join("");
+}
+function monthData(){
+  const [y,m]=curMonth.split("-").map(Number),nd=new Date(y,m,0).getDate();
+  const first=curMonth+"-01",last=curMonth+"-"+pad(nd);
+  const prevDay=iso(new Date(y,m-1,0));
+  const start=stockAt(prevDay),end=stockAt(last);
+  const agg={};PRODUCTS.forEach(p=>agg[p.id]={in:0,out:0});
+  const days={};
+  moves.forEach(mv=>{if(mv.d<first||mv.d>last)return;const a=agg[mv.p]||(agg[mv.p]={in:0,out:0});
+    const dd=days[mv.d]||(days[mv.d]={in:0,out:0,n:0});dd.n++;
+    if(mv.t==="in"){a.in+=mv.q;dd.in+=mv.q}else if(mv.t==="out"){a.out+=mv.q;dd.out+=mv.q}});
+  return {y,m,nd,first,last,start,end,agg,days};
+}
+function renderMonth(){
+  const D=monthData();let I=0,O=0,S=0,E=0;
+  const rows=PRODUCTS.map(p=>{const a=D.agg[p.id],s=D.start[p.id],e=D.end[p.id];I+=a.in;O+=a.out;S+=s;E+=e;
+    return `<tr><td>${p.name}</td><td>${fmt(s)}</td><td class="in">${a.in?"+"+fmt(a.in):"–"}</td><td class="out">${a.out?"−"+fmt(a.out):"–"}</td><td class="end">${fmt(e)}</td></tr>`}).join("");
+  $("mIn").innerHTML=kom(I);$("mOut").innerHTML=kom(O);$("mDays").textContent=Object.keys(D.days).length;$("mEnd").textContent=fmt(E)+" kom";
+  $("byProduct").innerHTML=`<tr><th>Proizvod</th><th>Poč.</th><th>Ulaz</th><th>Izlaz</th><th>Kraj</th></tr>`+rows+
+    `<tr class="tot"><td>Ukupno</td><td>${fmt(S)}</td><td class="in">+${fmt(I)}</td><td class="out">−${fmt(O)}</td><td>${fmt(E)}</td></tr>`;
+  const keys=Object.keys(D.days).sort();
+  $("byDay").innerHTML=keys.length
+    ?`<tr><th>Dan</th><th>Unosa</th><th>Ulaz</th><th>Izlaz</th></tr>`+keys.map(k=>{const d=parse(k),x=D.days[k];
+      return `<tr class="day" data-day="${k}"><td>${d.getDate()}. ${DSHORT[d.getDay()]}</td><td>${x.n}</td><td class="in">${x.in?"+"+fmt(x.in):"–"}</td><td class="out">${x.out?"−"+fmt(x.out):"–"}</td></tr>`}).join("")
+    :`<tr><td class="empty" colspan="4" style="text-align:center">Nema kretanja u ovom mesecu.</td></tr>`;
+  chartMonth(D);
+}
+function niceMax(v){if(v<=0)return 1;const p=Math.pow(10,Math.floor(Math.log10(v)));const n=v/p;return [1,1.2,1.5,2,2.5,3,4,5,6,8,10].find(x=>n<=x)*p}
+function chartMonth(D){
+  const box=$("chDay"),ro=$("chDayR");
+  const W=Math.max(260,box.clientWidth||320),H=150,L=28,R=4,T=8,B=20,pw=W-L-R,ph=H-T-B;
+  const t=todayIso();const items=[];let mxv=0;
+  for(let d=1;d<=D.nd;d++){const k=curMonth+"-"+pad(d),x=D.days[k]||{in:0,out:0};mxv=Math.max(mxv,x.in,x.out);items.push({d,k,...x})}
+  const max=niceMax(mxv),col=pw/D.nd,bw=Math.max(1.5,(col-2)/2);
+  const y=v=>T+ph-(v/max)*ph;let g="",bars="",labs="",hits="";
+  [0,.5,1].forEach(f=>{const yy=y(max*f);g+=`<line x1="${L}" x2="${W-R}" y1="${yy}" y2="${yy}" stroke="#ECE4E5"/><text x="${L-5}" y="${yy+3.5}" text-anchor="end" font-size="10" fill="#7B6E70">${Math.round(max*f)}</text>`});
+  items.forEach((it,i)=>{const x0=L+i*col+1;
+    [["in","#1F7A4D",0],["out","#B01F2C",bw]].forEach(([k,c,off])=>{const v=it[k];if(v>0){const h=v/max*ph;bars+=`<rect data-i="${i}" x="${x0+off}" y="${T+ph-h}" width="${bw}" height="${h}" rx="${Math.min(2,bw/2)}" fill="${c}"/>`}});
+    if(it.d===1||it.d%5===0&&it.d<D.nd-1||it.d===D.nd)labs+=`<text x="${L+i*col+col/2}" y="${H-5}" text-anchor="middle" font-size="10" fill="${it.k===t?"#B01F2C":"#7B6E70"}" font-weight="${it.k===t?700:400}">${it.d}</text>`;
+    hits+=`<rect data-i="${i}" x="${L+i*col}" y="${T}" width="${col}" height="${ph+B}" fill="transparent"/>`});
+  box.innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="grafikon ulaza i izlaza">${g}<line x1="${L}" x2="${W-R}" y1="${T+ph}" y2="${T+ph}" stroke="#D9CFD0"/>${bars}${labs}${hits}</svg>`;
+  let best=null;items.forEach(it=>{if(it.out&&(!best||it.out>best.out))best=it});
+  const def=best?`<span>Najviše izdato:</span> ${best.d}. ${MGEN[D.m-1]} · ${fmt(best.out)} kom`:`<span>Nema izlaza u ovom mesecu</span>`;
+  ro.innerHTML=def;const s=box.firstChild;let act=-1;
+  const pick=e=>{const tg=e.target.closest&&e.target.closest("[data-i]");const i=tg?+tg.dataset.i:-1;if(i===act)return;act=i;
+    s.querySelectorAll("rect[data-i][fill]:not([fill=transparent])").forEach(r=>r.setAttribute("opacity",i<0||+r.dataset.i===i?"1":".3"));
+    const it=items[i];ro.innerHTML=i<0?def:`${it.d}. ${MGEN[D.m-1]} <span>·</span> <span style="color:#1F7A4D;font-weight:700">+${fmt(it.in)}</span> <span>/</span> <span style="color:#B01F2C;font-weight:700">−${fmt(it.out)}</span> <span>kom</span>`};
+  s.addEventListener("pointerdown",pick);s.addEventListener("pointermove",e=>{if(e.pointerType==="mouse")pick(e)});
+  s.addEventListener("pointerleave",e=>{if(e.pointerType==="mouse")pick({target:s})});
+}
+function renderStock(){
+  const st=stockAt("9999-12-31");
+  const tot=PRODUCTS.reduce((a,p)=>a+Math.max(0,st[p.id]),0);
+  $("stockList").innerHTML=PRODUCTS.map(p=>{const q=st[p.id],c=cls(q),lm=lastMove(p.id);
+    const last=lm?`poslednje: ${TYPE[lm.t].toLowerCase()} ${fmt(lm.q)} · ${parse(lm.d).getDate()}.${parse(lm.d).getMonth()+1}.`:"još nema unosa";
+    return `<button class="stock-row" data-p="${p.id}" style="width:100%;text-align:left"><span class="ico">${ICONS[p.id]}</span><div class="main"><div class="t">${p.name}</div><div class="s">${last}</div></div>
+      <span class="pill ${c}">${q<=0?"Nema":q<=LOW?"Malo":"Ima"}</span><div class="q">${fmt(q)}<small>kom</small></div></button>`}).join("");
+}
+function render(){renderNav();if(view==="day")renderDay();else if(view==="month")renderMonth();else renderStock()}
+
+/* ---------- navigacija ---------- */
+function setDate(s){selDate=s;curMonth=s.slice(0,7);confirmId=null;render()}
+function setMonth(m){curMonth=m;const t=todayIso();selDate=t.startsWith(m)?t:m+"-01";render()}
+function shift(n){
+  if(view==="day"){const d=parse(selDate);d.setDate(d.getDate()+n);setDate(iso(d))}
+  else if(view==="month"){const [y,mm]=curMonth.split("-").map(Number);setMonth(iso(new Date(y,mm-1+n,1)).slice(0,7))}
+}
+function setView(v){
+  if(v==="stock"){selDate=todayIso();curMonth=selDate.slice(0,7)}
+  view=v;["day","month","stock"].forEach(k=>{$(k+"View").hidden=k!==v});
+  $("tabDay").setAttribute("aria-selected",v==="day");$("tabMonth").setAttribute("aria-selected",v==="month");$("tabStock").setAttribute("aria-selected",v==="stock");
+  render();
+}
+(function(){let sx=0,sy=0,ok=false;const dv=$("dayView");
+  dv.addEventListener("touchstart",e=>{if(e.touches.length!==1){ok=false;return}ok=true;sx=e.touches[0].clientX;sy=e.touches[0].clientY},{passive:true});
+  dv.addEventListener("touchend",e=>{if(!ok||$("sheet").classList.contains("on"))return;ok=false;const t=e.changedTouches[0],dx=t.clientX-sx,dy=t.clientY-sy;
+    if(Math.abs(dx)>60&&Math.abs(dy)<45&&Math.abs(dx)>Math.abs(dy)*1.5)shift(dx<0?1:-1)},{passive:true});
+})();
+
+/* ---------- panel za ulaz / izlaz ---------- */
+function curStock(pid){return stockAt(selDate)[pid]}
+function openSheet(p){
+  sheetP=p;sheetT="out";sheetQ=1;
+  $("sheetTitle").textContent=p.name;$("sheetIco").innerHTML=ICONS[p.id];
+  const d=parse(selDate),isT=selDate===todayIso();
+  $("sheetSub").innerHTML=`Na stanju <b>${fmt(curStock(p.id))} kom</b> · ${isT?"danas":d.getDate()+". "+MGEN[d.getMonth()]}`;
+  updSheet();$("veil").classList.add("on");$("sheet").classList.add("on");
+}
+function updSheet(){
+  const cur=curStock(sheetP.id);
+  $("seg").querySelectorAll("button").forEach(b=>b.classList.toggle("on",b.dataset.t===sheetT));
+  $("qNum").textContent=sheetQ;$("qLbl").textContent=sheetT==="set"?"prebrojano":"komada";
+  const nw=sheetT==="in"?cur+sheetQ:sheetT==="out"?cur-sheetQ:sheetQ;
+  const pv=$("preview");pv.className="preview"+(nw<0?" neg":"");
+  pv.innerHTML=sheetT==="set"
+    ?`Stanje se postavlja na <b>${fmt(nw)} kom</b>${nw!==cur?` (razlika ${nw>cur?"+":"−"}${fmt(Math.abs(nw-cur))})`:""}`
+    :`Novo stanje: <b>${fmt(nw)} kom</b>${nw<0?" · nema dovoljno na stanju":""}`;
+  const go=$("go");go.className="btn go "+sheetT;go.textContent=sheetT==="in"?`Primljeno ${sheetQ} kom`:sheetT==="out"?`Izdato ${sheetQ} kom`:`Upiši popis: ${sheetQ} kom`;
+}
+function closeSheet(){$("veil").classList.remove("on");$("sheet").classList.remove("on");sheetP=null}
+$("seg").onclick=e=>{const b=e.target.closest("[data-t]");if(!b)return;sheetT=b.dataset.t;sheetQ=sheetT==="set"?Math.max(0,curStock(sheetP.id)):1;updSheet()};
+$("qMinus").onclick=()=>{sheetQ=Math.max(sheetT==="set"?0:1,sheetQ-1);updSheet()};
+$("qPlus").onclick=()=>{sheetQ=Math.min(9999,sheetQ+1);updSheet()};
+$("chips").onclick=e=>{const b=e.target.closest("[data-c]");if(b){sheetQ=+b.dataset.c;updSheet()}};
+$("go").onclick=()=>{if(!sheetP)return;const p=sheetP;closeSheet();addMove(p,sheetT,sheetQ)};
+$("cancel").onclick=closeSheet;$("veil").onclick=closeSheet;
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeSheet()});
+
+function toast(t,undo){
+  $("toastText").textContent=t;$("undo").hidden=!undo;$("toast").classList.add("on");
+  clearTimeout(toastTimer);toastTimer=setTimeout(()=>{$("toast").classList.remove("on");lastAdded=null},4500);
+}
+$("undo").onclick=()=>{if(lastAdded){removeMove(lastAdded);lastAdded=null}$("toast").classList.remove("on")};
+
+/* ---------- događaji ---------- */
+$("products").onclick=e=>{const b=e.target.closest("[data-p]");if(b)openSheet(PRODUCTS.find(p=>p.id===b.dataset.p))};
+$("stockList").onclick=e=>{const b=e.target.closest("[data-p]");if(b)openSheet(PRODUCTS.find(p=>p.id===b.dataset.p))};
+$("entries").onclick=e=>{
+  const d=e.target.closest("[data-del]"),y=e.target.closest("[data-yes]"),n=e.target.closest("[data-no]");
+  if(d){confirmId=d.dataset.del;renderDay()}
+  else if(y){confirmId=null;removeMove(y.dataset.yes)}
+  else if(n){confirmId=null;renderDay()}
+};
+$("byDay").onclick=e=>{const r=e.target.closest("[data-day]");if(r){setDate(r.dataset.day);setView("day")}};
+$("prev").onclick=()=>shift(-1);$("next").onclick=()=>shift(1);
+$("tabDay").onclick=()=>setView("day");$("tabMonth").onclick=()=>setView("month");$("tabStock").onclick=()=>setView("stock");
+let lastSeenToday=todayIso();
+document.addEventListener("visibilitychange",()=>{if(!document.hidden){const t=todayIso();if(lastSeenToday!==t){if(view!=="month"&&selDate===lastSeenToday)setDate(t);lastSeenToday=t}else render()}});
+let rsz;window.addEventListener("resize",()=>{clearTimeout(rsz);rsz=setTimeout(()=>{if(view==="month")render()},150)});
+
+/* ---------- rezervna kopija ---------- */
+const backupText=()=>JSON.stringify({app:"jmd-magacin",v:1,code:"K10",moves});
+$("bkSend").onclick=async()=>{const t=backupText();
+  try{const f=new File([t],"jmd-magacin-K10-"+todayIso()+".json",{type:"application/json"});
+    if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:"JMD Magacin kopija"});return}
+    if(navigator.share){await navigator.share({title:"JMD Magacin kopija",text:t});return}}catch(e){if(e&&e.name==="AbortError")return}
+  try{const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([t],{type:"application/json"}));a.download="jmd-magacin-K10-"+todayIso()+".json";document.body.appendChild(a);a.click();a.remove();$("bkMsg").textContent="Kopija je preuzeta."}catch(e){}
+};
+function importText(txt){
+  try{const o=JSON.parse(String(txt).trim());const arr=Array.isArray(o)?o:o.moves;
+    if(!Array.isArray(arr))throw 0;
+    const ok=arr.filter(m=>m&&typeof m.id==="string"&&/^\d{4}-\d{2}-\d{2}$/.test(m.d)&&["in","out","set"].includes(m.t)&&Number.isFinite(m.q));
+    if(!ok.length&&arr.length)throw 0;
+    moves=ok;save();render();$("bkMsg").textContent="Učitano unosa: "+ok.length+".";return true;
+  }catch(e){$("bkMsg").textContent="Ovo nije ispravna kopija magacina.";return false}
+}
+$("bkFileBtn").onclick=()=>$("bkFile").click();
+$("bkFile").onchange=e=>{const f=e.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>importText(rd.result);rd.readAsText(f);e.target.value=""};
+$("bkOpen").onclick=()=>{$("bkBox").hidden=!$("bkBox").hidden};
+$("bkLoad").onclick=()=>{if(importText($("bkText").value)){$("bkBox").hidden=true;$("bkText").value=""}};
+
+/* ---------- dnevni izveštaj kao slika ---------- */
+function rrect(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath()}
+function logoImage(){return new Promise(ok=>{const sv=document.querySelector(".logo svg");if(!sv)return ok(null);
+  const cl=sv.cloneNode(true);cl.setAttribute("xmlns","http://www.w3.org/2000/svg");cl.removeAttribute("style");
+  const im=new Image();im.onload=()=>ok(im);im.onerror=()=>ok(null);im.src="data:image/svg+xml;charset=utf-8,"+encodeURIComponent(cl.outerHTML)})}
+function dayReport(date){
+  const d=parse(date),prev=iso(new Date(d.getFullYear(),d.getMonth(),d.getDate()-1));
+  const s=stockAt(prev),rows={};PRODUCTS.forEach(p=>rows[p.id]={start:s[p.id],in:0,out:0,moved:false,fix:false});
+  dayMoves(date).forEach(m=>{const r=rows[m.p];if(!r)return;
+    if(m.t==="set"){if(!r.moved){r.start=m.q}else{r.fix=true}}
+    else{r.moved=true;if(m.t==="in")r.in+=m.q;else r.out+=m.q}});
+  const end=stockAt(date);PRODUCTS.forEach(p=>rows[p.id].end=end[p.id]);
+  return rows;
+}
+async function makeDayImage(date){
+  const rows=dayReport(date),d=parse(date);
+  const W=1080,H=1350,cv=document.createElement("canvas");cv.width=W;cv.height=H;const c=cv.getContext("2d");
+  const F='-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif',RED="#B01F2C",INK="#1B1516",MUT="#7B6E70",LINE="#ECE4E5",OK="#1F7A4D";
+  const T=(t,x,y,sz,col,w,al)=>{c.font=`${w||400} ${sz}px ${F}`;c.fillStyle=col;c.textAlign=al||"left";c.fillText(t,x,y)};
+  c.fillStyle="#F7F3F3";c.fillRect(0,0,W,H);c.fillStyle="#fff";c.fillRect(0,0,W,190);c.fillStyle=LINE;c.fillRect(0,190,W,2);
+  const lg=await logoImage();if(lg){const lw=440,lh=lw*lg.height/lg.width||72;c.drawImage(lg,56,95-lh/2,lw,lh)}
+  T("PREZENTER K10",W-56,92,32,RED,800,"right");T("Magacin",W-56,138,30,INK,600,"right");
+  T("Dnevni izveštaj magacina",56,272,50,INK,800);
+  T(cap(DAYS[d.getDay()])+", "+d.getDate()+". "+MGEN[d.getMonth()]+" "+d.getFullYear()+".",56,322,32,MUT,500);
+  // tabela: samo krajnje stanje
+  let y=420;const rh=78;
+  rrect(c,36,y-60,W-72,96+PRODUCTS.length*rh,26);c.fillStyle="#fff";c.fill();
+  T("Proizvod",76,y,24,MUT,700);T("Stanje",W-76,y,24,MUT,700,"right");
+  c.fillStyle=LINE;c.fillRect(56,y+20,W-112,2);y+=80;
+  PRODUCTS.forEach((p,i)=>{const q=rows[p.id].end;
+    T(p.name,76,y,34,INK,700);T(fmt(q)+" kom",W-76,y,36,q<=0?RED:INK,800,"right");
+    if(i<PRODUCTS.length-1){c.fillStyle=LINE;c.fillRect(56,y+26,W-112,1)}y+=rh});
+  const t=new Date();T("JMD 021 Trade DOO · napravljeno "+t.getDate()+"."+(t.getMonth()+1)+"."+t.getFullYear()+". u "+pad(t.getHours())+":"+pad(t.getMinutes()),W/2,H-36,22,MUT,500,"center");
+  return {cv,name:`JMD-magacin-K10-${date.split("-").reverse().join(".")}.png`};
+}
+$("dayRepBtn").onclick=async()=>{const msg=$("dayRepMsg");msg.textContent="Pravim izveštaj…";
+  try{const {cv,name}=await makeDayImage(todayIso());
+    const blob=await new Promise(r=>cv.toBlob(r,"image/png"));const file=new File([blob],name,{type:"image/png"});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:name});msg.textContent="";return}
+    const a=document.createElement("a");a.href=URL.createObjectURL(file);a.download=name;document.body.appendChild(a);a.click();a.remove();msg.textContent="Slika je preuzeta.";
+  }catch(e){msg.textContent=e&&e.name==="AbortError"?"":"Nije uspelo. Pokušaj ponovo."}};
+
+/* ---------- izvoz u Excel ---------- */
+function loadXLSX(){return window.XLSX?Promise.resolve():new Promise((ok,no)=>{const s=document.createElement("script");s.src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js";s.onload=ok;s.onerror=no;document.head.appendChild(s)})}
+$("xlsBtn").onclick=async()=>{const msg=$("xlsMsg");msg.textContent="Pravim fajl…";
+  try{await loadXLSX();const D=monthData();const after={};stockAt(D.last,after);
+    const st=[["Proizvod","Početno stanje","Primljeno","Izdato","Korekcija (popis)","Krajnje stanje"]];
+    PRODUCTS.forEach(p=>{const a=D.agg[p.id],s=D.start[p.id],e=D.end[p.id];st.push([p.name,s,a.in,a.out,e-s-a.in+a.out,e])});
+    const sum=i=>st.slice(1).reduce((a,r)=>a+r[i],0);st.push(["Ukupno",sum(1),sum(2),sum(3),sum(4),sum(5)]);
+    const mv=[["Datum","Vreme","Proizvod","Vrsta","Količina","Stanje posle"]];
+    moves.filter(m=>m.d>=D.first&&m.d<=D.last).sort(byOrder).forEach(m=>mv.push([m.d.split("-").reverse().join("."),m.time||"",pname(m.p),TYPE[m.t],m.t==="out"?-m.q:m.q,after[m.id]]));
+    const wb=XLSX.utils.book_new();
+    [[st,"Stanje",[20,15,12,12,17,15]],[mv,"Kretanja",[12,8,20,12,10,13]]].forEach(([a,n,w])=>{const ws=XLSX.utils.aoa_to_sheet(a);ws["!cols"]=w.map(x=>({wch:x}));XLSX.utils.book_append_sheet(wb,ws,n)});
+    const name=`JMD-magacin-K10-${MONTHS[D.m-1]}-${D.y}.xlsx`;const out=XLSX.write(wb,{bookType:"xlsx",type:"array"});
+    const file=new File([out],name,{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:name});msg.textContent="Gotovo.";return}
+    const a=document.createElement("a");a.href=URL.createObjectURL(file);a.download=name;document.body.appendChild(a);a.click();a.remove();msg.textContent="Fajl je preuzet.";
+  }catch(e){msg.textContent=e&&e.name==="AbortError"?"":"Nije uspelo. Proveri internet i pokušaj ponovo."}};
+
+/* ---------- start ---------- */
+render();
+if("serviceWorker" in navigator&&location.protocol==="https:"){navigator.serviceWorker.register("sw.js",{updateViaCache:"none"}).catch(()=>{})}
+try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
+setTimeout(()=>{const sp=$("splash");sp.classList.add("out");setTimeout(()=>sp.remove(),400)},1500);
+</script>
+</body></html>
